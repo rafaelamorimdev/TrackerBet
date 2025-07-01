@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { Check, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
-
+// Interface para definir a estrutura de um plano, agora sem a lista de 'features'
 interface Plan {
   id: string;
   name: string;
   priceId: string; // ID do preço na Stripe ou outro gateway
   price: number;
   duration: string;
-  features: string[];
   isPopular?: boolean;
   discountInfo?: string;
 }
@@ -19,7 +18,7 @@ export const PricingPage: React.FC = () => {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // --- Lógica de Cálculo dos Preços com os novos descontos ---
+  // Lógica de Cálculo dos Preços
   const monthlyPrice = 30;
   const quarterlyPricePerMonth = monthlyPrice * (1 - 0.25); // Desconto de 25%
   const annualPricePerMonth = (monthlyPrice * 12 * (1 - 0.40)) / 12; // Desconto de 40%
@@ -31,7 +30,6 @@ export const PricingPage: React.FC = () => {
       priceId: 'price_monthly_test',
       price: monthlyPrice,
       duration: '/mês',
-      features: ['Apostas Ilimitadas', 'Dashboard Completo', 'Suporte por E-mail'],
     },
     {
       id: 'quarterly',
@@ -39,9 +37,8 @@ export const PricingPage: React.FC = () => {
       priceId: 'price_quarterly_test',
       price: quarterlyPricePerMonth * 3,
       duration: '/trimestre',
-      features: ['Tudo do plano Mensal', 'Análise de ROI Avançada', 'Histórico Extendido'],
       isPopular: true,
-      discountInfo: `Poupe 25% (R$${quarterlyPricePerMonth.toFixed(2)}/mês)`,
+      discountInfo: `Poupe 25%`,
     },
     {
       id: 'annual',
@@ -49,12 +46,11 @@ export const PricingPage: React.FC = () => {
       priceId: 'price_annual_test',
       price: annualPricePerMonth * 12,
       duration: '/ano',
-      features: ['Tudo do plano Trimestral', 'Relatórios Personalizados', 'Suporte Prioritário'],
-      discountInfo: `Poupe 40% (R$${annualPricePerMonth.toFixed(2)}/mês)`,
+      discountInfo: `Poupe 40%`,
     },
   ];
 
-  
+  // Função para simular o início do processo de pagamento
   const handleSubscription = async (plan: Plan) => {
     if (!user) {
       setError("Por favor, faça login para subscrever um plano.");
@@ -65,10 +61,8 @@ export const PricingPage: React.FC = () => {
     setError(null);
 
     try {
-      
-
+      // Aqui iria a sua lógica para chamar a Cloud Function
       console.log(`Iniciando checkout para o utilizador ${user.uid} com o plano ${plan.name} (Price ID: ${plan.priceId})`);
-      
       await new Promise(resolve => setTimeout(resolve, 1500));
       alert(`Seria redirecionado para o pagamento do plano ${plan.name}.`);
 
@@ -88,7 +82,7 @@ export const PricingPage: React.FC = () => {
             Escolha o Plano Ideal para Si
           </h1>
           <p className="mt-4 text-xl text-gray-600 dark:text-gray-400">
-            Tenha acesso a ferramentas poderosas para levar a sua gestão de apostas ao próximo nível.
+            Acesso completo à plataforma. Escolha o período e aproveite os descontos.
           </p>
         </div>
 
@@ -98,7 +92,7 @@ export const PricingPage: React.FC = () => {
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`relative p-8 bg-white dark:bg-gray-800 border rounded-2xl shadow-sm flex flex-col ${
+              className={`relative p-8 bg-white dark:bg-gray-800 border rounded-2xl shadow-sm flex flex-col justify-between ${
                 plan.isPopular ? 'border-2 border-blue-600' : 'border-gray-200 dark:border-gray-700'
               }`}
             >
@@ -109,27 +103,18 @@ export const PricingPage: React.FC = () => {
                 </div>
               )}
 
-              <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">{plan.name}</h3>
-              {plan.discountInfo && (
-                <p className="mt-2 text-sm text-green-600 dark:text-green-400 font-medium">{plan.discountInfo}</p>
-              )}
+              <div>
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white">{plan.name}</h3>
+                {plan.discountInfo && (
+                  <p className="mt-2 text-sm text-green-600 dark:text-green-400 font-medium">{plan.discountInfo}</p>
+                )}
 
-              <div className="mt-4">
-                <span className="text-5xl font-extrabold text-gray-900 dark:text-white">R${(plan.price / (plan.id === 'monthly' ? 1 : plan.id === 'quarterly' ? 3 : 12)).toFixed(2)}</span>
-                <span className="text-base font-medium text-gray-500 dark:text-gray-400">/mês</span>
+                <div className="mt-4">
+                  <span className="text-5xl font-extrabold text-gray-900 dark:text-white">R${(plan.price / (plan.id === 'monthly' ? 1 : plan.id === 'quarterly' ? 3 : 12)).toFixed(2)}</span>
+                  <span className="text-base font-medium text-gray-500 dark:text-gray-400">/mês</span>
+                </div>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Cobrado como R${plan.price.toFixed(2)} {plan.duration}</p>
               </div>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Cobrado como R${plan.price.toFixed(2)} {plan.duration}</p>
-
-              <ul className="mt-8 space-y-4 text-left flex-grow">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start">
-                    <div className="flex-shrink-0">
-                      <Check className="h-6 w-6 text-green-500" />
-                    </div>
-                    <p className="ml-3 text-base text-gray-700 dark:text-gray-300">{feature}</p>
-                  </li>
-                ))}
-              </ul>
 
               <button
                 onClick={() => handleSubscription(plan)}
