@@ -13,6 +13,7 @@ export const Login: React.FC = () => {
 
   const { login, register, loginWithGoogle } = useAuth();
 
+  // Função para lidar com o login/registo por email e senha
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -22,16 +23,16 @@ export const Login: React.FC = () => {
       if (isLogin) {
         await login(formData.email, formData.password);
       } else {
-        
         await register(formData.email, formData.password);
       }
-    } catch(err){
+      // Em caso de sucesso, o hook useAuth irá tratar do redirecionamento
+    } catch (err) {
       let errorMessage = 'Ocorreu um erro desconhecido.';
       if (err instanceof FirebaseError) {
-        
         switch (err.code) {
           case 'auth/user-not-found':
-            errorMessage = 'Nenhum utilizador encontrado com este e-mail.';
+          case 'auth/invalid-credential':
+            errorMessage = 'Email ou senha inválidos. Verifique as suas credenciais.';
             break;
           case 'auth/wrong-password':
             errorMessage = 'Senha incorreta. Por favor, tente novamente.';
@@ -40,18 +41,20 @@ export const Login: React.FC = () => {
             errorMessage = 'Este e-mail já está a ser utilizado por outra conta.';
             break;
           case 'auth/weak-password':
-             errorMessage = 'A senha deve ter pelo menos 6 caracteres.';
-             break;
+            errorMessage = 'A senha deve ter pelo menos 6 caracteres.';
+            break;
           default:
-            errorMessage = 'Erro de autenticação. Verifique as suas credenciais.';
+            errorMessage = 'Erro de autenticação. Tente novamente mais tarde.';
         }
       }
       setError(errorMessage);
     } finally {
+      // Este bloco é executado sempre, garantindo que o botão volta ao normal
       setLoading(false);
     }
   };
 
+  // Função para lidar com o login com o Google
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     setError(null);
@@ -64,6 +67,7 @@ export const Login: React.FC = () => {
         setError('Ocorreu um erro ao tentar o login com o Google.');
       }
     } finally {
+      // Garante que o botão do Google volta ao normal
       setGoogleLoading(false);
     }
   };
@@ -86,7 +90,6 @@ export const Login: React.FC = () => {
               {error}
             </div>
           )}
-          
           
           <div className="flex mb-6 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
             <button onClick={() => { setIsLogin(true); setError(null); }} className={`flex-1 py-2 text-center rounded-md font-medium transition-all ${isLogin ? 'bg-white dark:bg-blue-600 text-blue-600 dark:text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
