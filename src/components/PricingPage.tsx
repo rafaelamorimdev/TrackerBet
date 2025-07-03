@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Star } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 
-// Interface para definir a estrutura de um plano, agora sem a lista de 'features'
+
 interface Plan {
   id: string;
   name: string;
-  priceId: string; // ID do preço na Stripe ou outro gateway
+  priceId: string; 
   price: number;
   duration: string;
   isPopular?: boolean;
@@ -18,10 +18,10 @@ export const PricingPage: React.FC = () => {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Lógica de Cálculo dos Preços
+  
   const monthlyPrice = 30;
-  const quarterlyPricePerMonth = monthlyPrice * (1 - 0.25); // Desconto de 25%
-  const annualPricePerMonth = (monthlyPrice * 12 * (1 - 0.40)) / 12; // Desconto de 40%
+  const quarterlyPricePerMonth = monthlyPrice * (1 - 0.25); 
+  const annualPricePerMonth = (monthlyPrice * 12 * (1 - 0.40)) / 12; 
 
   const plans: Plan[] = [
     {
@@ -50,7 +50,7 @@ export const PricingPage: React.FC = () => {
     },
   ];
 
-  // Função para simular o início do processo de pagamento
+  
   const handleSubscription = async (plan: Plan) => {
     if (!user) {
       setError("Por favor, faça login para subscrever um plano.");
