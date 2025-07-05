@@ -14,7 +14,7 @@ if (!getApps().length) {
     credential: cert(serviceAccount),
   });
 }
-
+//funcionando perfeitamente.
 const db = getFirestore();
 
 // Função que recebe as confirmações de pagamento do AbacatePay
