@@ -1,6 +1,6 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
+import { initializeApp, FirebaseApp } from 'firebase/app';
+import { getAuth, Auth, GoogleAuthProvider } from 'firebase/auth';
+import { getFirestore, Firestore, enableIndexedDbPersistence } from 'firebase/firestore';
 
 // Objeto de configuração que agora lê as variáveis de ambiente
 const firebaseConfig = {
@@ -17,22 +17,23 @@ if (!firebaseConfig.apiKey) {
   throw new Error("A chave de API do Firebase não foi encontrada. Verifique o seu ficheiro .env.local");
 }
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const googleProvider = new GoogleAuthProvider();
+// Inicializa o Firebase e exporta as instâncias com tipos explícitos
+const app: FirebaseApp = initializeApp(firebaseConfig);
+export const auth: Auth = getAuth(app);
+export const db: Firestore = getFirestore(app);
+export const googleProvider: GoogleAuthProvider = new GoogleAuthProvider();
 
 // Configura o provedor do Google
 googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
-// Habilita a persistência offline do Firestore (forma recomendada)
+// Habilita a persistência offline do Firestore
 enableIndexedDbPersistence(db)
   .catch((err) => {
-    if (err.code == 'failed-precondition') {
+    if (err.code === 'failed-precondition') {
       console.warn("A persistência do Firestore falhou: múltiplas abas abertas.");
-    } else if (err.code == 'unimplemented') {
+    } else if (err.code === 'unimplemented') {
       console.warn("A persistência do Firestore não é suportada neste navegador.");
     }
   });

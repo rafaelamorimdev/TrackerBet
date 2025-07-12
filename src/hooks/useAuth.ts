@@ -56,6 +56,7 @@ export const useAuth = () => {
       }
     };
   }, []);
+  
 
   const login = async (email: string, password: string) => {
     return signInWithEmailAndPassword(auth, email, password);
@@ -75,3 +76,5 @@ export const useAuth = () => {
 
   return { user, loading, error, login, register, loginWithGoogle, logout };
 };
+
+
