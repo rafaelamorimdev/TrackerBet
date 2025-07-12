@@ -1,5 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+// Adicionando a configuração da API para garantir a compatibilidade com o sistema de módulos da Vercel.
+// bodyParser: true (o padrão) é necessário pois esta função lê o corpo da requisição.
+export const config = {
+  api: {
+    bodyParser: true,
+  },
+};
+
 export default async function handler(
   request: VercelRequest,
   response: VercelResponse,
@@ -46,7 +54,7 @@ export default async function handler(
             id: user.uid,
             name: user.displayName || user.email,
             email: user.email,
-            cellphone: "11999999999", // Nota: Este valor está fixo, considere torná-lo dinâmico se necessário.
+            cellphone: "11999999999", // Nota: Este valor está fixo.
             taxId: user.taxId,
         },
       }),

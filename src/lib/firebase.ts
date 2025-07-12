@@ -1,6 +1,10 @@
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, Firestore, enableMultiTabIndexedDbPersistence } from 'firebase/firestore'; // CORREÇÃO: Importa a função correta
+import { 
+  initializeFirestore, 
+  persistentLocalCache, 
+  persistentMultipleTabManager 
+} from 'firebase/firestore'; // CORREÇÃO: Importando as funções da API moderna
 
 // Objeto de configuração que agora lê as variáveis de ambiente
 const firebaseConfig = {
@@ -20,7 +24,6 @@ if (!firebaseConfig.apiKey) {
 // Inicializa o Firebase e exporta as instâncias com tipos explícitos
 const app: FirebaseApp = initializeApp(firebaseConfig);
 export const auth: Auth = getAuth(app);
-export const db: Firestore = getFirestore(app);
 export const googleProvider: GoogleAuthProvider = new GoogleAuthProvider();
 
 // Configura o provedor do Google
@@ -28,12 +31,9 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
-// CORREÇÃO: Habilita a persistência do Firestore para múltiplas abas
-enableMultiTabIndexedDbPersistence(db)
-  .catch((err) => {
-    if (err.code === 'failed-precondition') {
-      console.warn("A persistência multi-tab do Firestore falhou: múltiplas abas abertas com persistência ativada.");
-    } else if (err.code === 'unimplemented') {
-      console.warn("A persistência multi-tab do Firestore não é suportada neste navegador.");
-    }
-  });
+// CORREÇÃO: Habilita a persistência com a nova API, que já suporta múltiplas abas por padrão.
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
+});
