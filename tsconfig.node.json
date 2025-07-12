@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "composite": true,
     "target": "ES2022",
     "lib": ["ES2022"],
     "module": "NodeNext",
@@ -9,7 +10,6 @@
     "strict": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "isolatedModules": true,
     "noEmit": false
   },
   "include": [
