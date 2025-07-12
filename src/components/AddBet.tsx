@@ -57,8 +57,8 @@ export const AddBet: React.FC = () => {
   };
 
   const commonMarkets = [
-    'Vitória', 'Empate', 'Ambas Marcam', 'Over 2.5', 'Under 2.5',
-    'Handicap', 'Cantos', 'Cartões', 'Golos 1ª Parte', 'Desarmes'
+    'Vitória', 'Empate', 'Ambas Marcam', 'Over gols', 'Under gols',
+    'Handicap', 'Cantos', 'Cartões', 'Golos 1ª Parte', 'Desarmes', 'BINGO', 'laterais', 'metas', 'faltas', 'finalizações'
   ];
 
   return (
