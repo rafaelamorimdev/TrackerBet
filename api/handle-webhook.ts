@@ -4,7 +4,6 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { createHmac, timingSafeEqual } from 'crypto';
 
 // --- Configuração do Firebase Admin ---
-// Verifica se a app já foi inicializada para evitar erros em ambientes serverless
 if (!getApps().length) {
   const serviceAccount = JSON.parse(
     process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string
@@ -14,11 +13,10 @@ if (!getApps().length) {
     credential: cert(serviceAccount),
   });
 }
-// A variável 'db' agora será usada dentro da função 'handler'
 const db = getFirestore();
 
 // --- Configuração da Vercel para ler o corpo bruto (raw body) ---
-// Isto é essencial para a verificação da assinatura do webhook.
+// A sintaxe 'export const' é a forma correta para ES Modules e resolve o erro de deploy.
 export const config = {
   api: {
     bodyParser: false,
@@ -33,7 +31,6 @@ async function buffer(req: VercelRequest) {
   }
   return Buffer.concat(chunks);
 }
-
 
 // Função que recebe as confirmações de pagamento do AbacatePay
 export default async function handler(
@@ -67,7 +64,6 @@ export default async function handler(
       return response.status(401).send('Assinatura do webhook inválida.');
     }
     
-    // Se a assinatura é válida, podemos fazer o "parse" do corpo agora
     const event = JSON.parse(rawBody.toString());
 
     // ETAPA 2: VERIFICAÇÃO DE IDEMPOTÊNCIA (ROBUSTEZ)
@@ -80,7 +76,6 @@ export default async function handler(
     const eventDoc = await eventRef.get();
 
     if (eventDoc.exists) {
-      // Este evento já foi processado com sucesso.
       return response.status(200).json({ message: 'Evento já processado.' });
     }
 
@@ -111,7 +106,6 @@ export default async function handler(
       });
 
       // ETAPA 4: PERSISTE O SUCESSO DO PROCESSAMENTO
-      // Salva o ID do evento na nossa coleção de controle para garantir a idempotência
       await eventRef.set({ 
         processedAt: new Date(), 
         eventType: event.event 
