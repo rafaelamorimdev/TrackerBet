@@ -1,6 +1,6 @@
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, Firestore, enableIndexedDbPersistence } from 'firebase/firestore';
+import { getFirestore, Firestore, enableMultiTabIndexedDbPersistence } from 'firebase/firestore'; // CORREÇÃO: Importa a função correta
 
 // Objeto de configuração que agora lê as variáveis de ambiente
 const firebaseConfig = {
@@ -28,12 +28,12 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
-// Habilita a persistência offline do Firestore
-enableIndexedDbPersistence(db)
+// CORREÇÃO: Habilita a persistência do Firestore para múltiplas abas
+enableMultiTabIndexedDbPersistence(db)
   .catch((err) => {
     if (err.code === 'failed-precondition') {
-      console.warn("A persistência do Firestore falhou: múltiplas abas abertas.");
+      console.warn("A persistência multi-tab do Firestore falhou: múltiplas abas abertas com persistência ativada.");
     } else if (err.code === 'unimplemented') {
-      console.warn("A persistência do Firestore não é suportada neste navegador.");
+      console.warn("A persistência multi-tab do Firestore não é suportada neste navegador.");
     }
   });
