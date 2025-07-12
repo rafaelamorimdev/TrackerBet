@@ -1,0 +1,16 @@
+{
+  "functions": {
+    "api/create-checkout.js": {
+      "runtime": "nodejs18.x"
+    },
+    "api/handle-webhook.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    }
+  ]
+}

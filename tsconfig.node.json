@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
     "composite": true,
-    "target": "es5",
+    "target": "ES2022",
     "noImplicitAny": false,
     "moduleResolution": "node",
     "lib": ["ES2022"],
-    "module": "commonjs",
+    "module": "ES2022",
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "sourceMap": true,
