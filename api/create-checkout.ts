@@ -15,12 +15,10 @@ export default async function handler(
   }
 
   try {
-    // LINHA DE DEBUG ADICIONADA: Verificando as variáveis disponíveis no log.
-    console.log('Executando create-checkout. Chaves de ambiente disponíveis:', Object.keys(process.env));
-
-    const abacatePayApiKey = process.env.ABACATEPAY_API_KEY;
-    if (!abacatePayApiKey) {
-      // Este é o erro que está acontecendo. O log acima nos dirá o porquê.
+    // CORREÇÃO FINAL: Usando o nome da variável que existe no seu ambiente Vercel.
+    const abacatePaySecretKey = process.env.ABACATEPAY_SECRET_KEY;
+    if (!abacatePaySecretKey) {
+      // Este erro não deve mais acontecer.
       throw new Error('A chave de API do gateway de pagamento não está configurada.');
     }
 
@@ -34,7 +32,7 @@ export default async function handler(
     const apiResponse = await fetch(apiURL, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${abacatePayApiKey}`,
+        "Authorization": `Bearer ${abacatePaySecretKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
