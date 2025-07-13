@@ -54,6 +54,9 @@ export default async function handler(
             name: user.displayName || user.email,
             email: user.email,
             taxId: sanitizedTaxId,
+            // CORREÇÃO: Adicionado campo 'cellphone' que é obrigatório pela API.
+            // O ideal no futuro seria capturar este dado do usuário.
+            cellphone: "11999999999",
         },
         // Adiciona metadados para rastrear o plano e o usuário no webhook
         metadata: {
