@@ -25,10 +25,39 @@ export default async function handler(
       return response.status(400).json({ error: 'Dados do utilizador, plano e CPF são obrigatórios.' });
     }
 
-    // Sanitize o CPF para remover caracteres não numéricos.
     const sanitizedTaxId = user.taxId.replace(/\D/g, '');
 
     const apiURL = "https://api.abacatepay.com/v1/billing/create";
+
+    // Prepara o corpo da requisição
+    const payload = {
+      products: [
+        {
+          externalId: plan.id,
+          name: `Subscrição ${plan.name}`,
+          price: plan.price * 100, // Preço em centavos
+          quantity: 1,
+        }
+      ],
+      frequency: "ONE_TIME",
+      methods: ["PIX"],
+      returnUrl: "https://tracker-bet-96pu.vercel.app/planos",
+      completionUrl: "https://tracker-bet-96pu.vercel.app/",
+      customer: {
+          id: user.uid,
+          name: user.displayName || user.email,
+          email: user.email,
+          taxId: sanitizedTaxId,
+          cellphone: "11999999999",
+      },
+      metadata: {
+        planId: plan.id,
+        userId: user.uid,
+      }
+    };
+
+    // LINHA DE DEBUG ADICIONADA: Imprime o payload exato que será enviado.
+    console.log("Enviando para o AbacatePay:", JSON.stringify(payload, null, 2));
 
     const apiResponse = await fetch(apiURL, {
       method: "POST",
@@ -36,34 +65,7 @@ export default async function handler(
         "Authorization": `Bearer ${abacatePaySecretKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        products: [
-          {
-            externalId: plan.id,
-            name: `Subscrição ${plan.name}`,
-            price: plan.price * 100, // Preço em centavos
-            quantity: 1,
-          }
-        ],
-        frequency: "ONE_TIME",
-        methods: ["PIX"],
-        returnUrl: "https://tracker-bet-96pu.vercel.app/planos",
-        completionUrl: "https://tracker-bet-96pu.vercel.app/",
-        customer: {
-            id: user.uid,
-            name: user.displayName || user.email,
-            email: user.email,
-            taxId: sanitizedTaxId,
-            // CORREÇÃO: Adicionado campo 'cellphone' que é obrigatório pela API.
-            // O ideal no futuro seria capturar este dado do usuário.
-            cellphone: "11999999999",
-        },
-        // Adiciona metadados para rastrear o plano e o usuário no webhook
-        metadata: {
-          planId: plan.id,
-          userId: user.uid,
-        }
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!apiResponse.ok) {
