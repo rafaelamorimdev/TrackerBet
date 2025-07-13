@@ -21,15 +21,17 @@ export default async function handler(
     }
 
     const { user, plan } = request.body;
-    if (!user || !plan || !user.taxId) {
-      return response.status(400).json({ error: 'Dados do utilizador, plano e CPF são obrigatórios.' });
+    // CORREÇÃO: Adicionada validação para o campo de telemóvel
+    if (!user || !plan || !user.taxId || !user.cellphone) {
+      return response.status(400).json({ error: 'Dados do utilizador, plano, CPF e telemóvel são obrigatórios.' });
     }
 
+    // Sanitize os dados para remover caracteres não numéricos.
     const sanitizedTaxId = user.taxId.replace(/\D/g, '');
+    const sanitizedCellphone = user.cellphone.replace(/\D/g, '');
 
     const apiURL = "https://api.abacatepay.com/v1/billing/create";
 
-    // Prepara o corpo da requisição
     const payload = {
       products: [
         {
@@ -48,7 +50,8 @@ export default async function handler(
           name: user.displayName || user.email,
           email: user.email,
           taxId: sanitizedTaxId,
-          cellphone: "11999999999",
+          // CORREÇÃO: Usando o telemóvel real e sanitizado enviado pelo frontend
+          cellphone: sanitizedCellphone,
       },
       metadata: {
         planId: plan.id,
@@ -56,7 +59,6 @@ export default async function handler(
       }
     };
 
-    // LINHA DE DEBUG ADICIONADA: Imprime o payload exato que será enviado.
     console.log("Enviando para o AbacatePay:", JSON.stringify(payload, null, 2));
 
     const apiResponse = await fetch(apiURL, {
