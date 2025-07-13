@@ -1,7 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Adicionando a configuração da API para garantir a compatibilidade com o sistema de módulos da Vercel.
-// bodyParser: true (o padrão) é necessário pois esta função lê o corpo da requisição.
 export const config = {
   api: {
     bodyParser: true,
@@ -17,9 +15,12 @@ export default async function handler(
   }
 
   try {
-    // CORREÇÃO: Alterado para ABACATEPAY_API_KEY para corresponder à variável de ambiente na Vercel.
+    // LINHA DE DEBUG ADICIONADA: Verificando as variáveis disponíveis no log.
+    console.log('Executando create-checkout. Chaves de ambiente disponíveis:', Object.keys(process.env));
+
     const abacatePayApiKey = process.env.ABACATEPAY_API_KEY;
     if (!abacatePayApiKey) {
+      // Este é o erro que está acontecendo. O log acima nos dirá o porquê.
       throw new Error('A chave de API do gateway de pagamento não está configurada.');
     }
 
@@ -33,7 +34,6 @@ export default async function handler(
     const apiResponse = await fetch(apiURL, {
       method: "POST",
       headers: {
-        // CORREÇÃO: Usando a variável com o nome correto.
         "Authorization": `Bearer ${abacatePayApiKey}`,
         "Content-Type": "application/json",
       },
@@ -42,7 +42,7 @@ export default async function handler(
           {
             externalId: plan.id,
             name: `Subscrição ${plan.name}`,
-            price: plan.price * 100, // Preço em centavos
+            price: plan.price * 100,
             quantity: 1,
           }
         ],
@@ -54,7 +54,7 @@ export default async function handler(
             id: user.uid,
             name: user.displayName || user.email,
             email: user.email,
-            cellphone: "11999999999", // Nota: Este valor está fixo.
+            cellphone: "11999999999",
             taxId: user.taxId,
         },
       }),
@@ -63,7 +63,7 @@ export default async function handler(
     if (!apiResponse.ok) {
       const errorBody = await apiResponse.json();
       console.error("Erro recebido do AbacatePay:", errorBody);
-      throw new Error(errorBody.message || "Erro no gateway de pagamento. Verifique os logs do terminal.");
+      throw new Error(errorBody.message || "Erro no gateway de pagamento.");
     }
 
     const session = await apiResponse.json();
