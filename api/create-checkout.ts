@@ -15,10 +15,8 @@ export default async function handler(
   }
 
   try {
-    // CORREÇÃO FINAL: Usando o nome da variável que existe no seu ambiente Vercel.
     const abacatePaySecretKey = process.env.ABACATEPAY_SECRET_KEY;
     if (!abacatePaySecretKey) {
-      // Este erro não deve mais acontecer.
       throw new Error('A chave de API do gateway de pagamento não está configurada.');
     }
 
@@ -26,6 +24,9 @@ export default async function handler(
     if (!user || !plan || !user.taxId) {
       return response.status(400).json({ error: 'Dados do utilizador, plano e CPF são obrigatórios.' });
     }
+
+    // Sanitize o CPF para remover caracteres não numéricos.
+    const sanitizedTaxId = user.taxId.replace(/\D/g, '');
 
     const apiURL = "https://api.abacatepay.com/v1/billing/create";
 
@@ -40,7 +41,7 @@ export default async function handler(
           {
             externalId: plan.id,
             name: `Subscrição ${plan.name}`,
-            price: plan.price * 100,
+            price: plan.price * 100, // Preço em centavos
             quantity: 1,
           }
         ],
@@ -52,16 +53,20 @@ export default async function handler(
             id: user.uid,
             name: user.displayName || user.email,
             email: user.email,
-            cellphone: "11999999999",
-            taxId: user.taxId,
+            taxId: sanitizedTaxId,
         },
+        // Adiciona metadados para rastrear o plano e o usuário no webhook
+        metadata: {
+          planId: plan.id,
+          userId: user.uid,
+        }
       }),
     });
 
     if (!apiResponse.ok) {
       const errorBody = await apiResponse.json();
       console.error("Erro recebido do AbacatePay:", errorBody);
-      throw new Error(errorBody.message || "Erro no gateway de pagamento.");
+      throw new Error(errorBody.message || "Erro no gateway de pagamento. Verifique os logs do terminal.");
     }
 
     const session = await apiResponse.json();
