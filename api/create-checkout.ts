@@ -21,23 +21,23 @@ export default async function handler(
     }
 
     const { user, plan } = request.body;
-    // CORREÇÃO: Adicionada validação para o campo de telemóvel
     if (!user || !plan || !user.taxId || !user.cellphone) {
       return response.status(400).json({ error: 'Dados do utilizador, plano, CPF e telemóvel são obrigatórios.' });
     }
 
-    // Sanitize os dados para remover caracteres não numéricos.
     const sanitizedTaxId = user.taxId.replace(/\D/g, '');
     const sanitizedCellphone = user.cellphone.replace(/\D/g, '');
 
     const apiURL = "https://api.abacatepay.com/v1/billing/create";
 
     const payload = {
+      // O campo devMode foi removido. A API agora opera em modo de produção.
+      // É CRUCIAL que os dados do cliente (taxId, cellphone) sejam válidos.
       products: [
         {
           externalId: plan.id,
           name: `Subscrição ${plan.name}`,
-          price: plan.price * 100, // Preço em centavos
+          price: plan.price * 100,
           quantity: 1,
         }
       ],
@@ -50,7 +50,6 @@ export default async function handler(
           name: user.displayName || user.email,
           email: user.email,
           taxId: sanitizedTaxId,
-          // CORREÇÃO: Usando o telemóvel real e sanitizado enviado pelo frontend
           cellphone: sanitizedCellphone,
       },
       metadata: {
@@ -73,7 +72,7 @@ export default async function handler(
     if (!apiResponse.ok) {
       const errorBody = await apiResponse.json();
       console.error("Erro recebido do AbacatePay:", errorBody);
-      throw new Error(errorBody.message || "Erro no gateway de pagamento. Verifique os logs do terminal.");
+      throw new Error(errorBody.message || "Erro no gateway de pagamento.");
     }
 
     const session = await apiResponse.json();
