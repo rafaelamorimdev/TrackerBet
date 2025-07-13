@@ -21,18 +21,14 @@ export default async function handler(
     }
 
     const { user, plan } = request.body;
-    if (!user || !plan || !user.taxId || !user.cellphone) {
-      return response.status(400).json({ error: 'Dados do utilizador, plano, CPF e telemóvel são obrigatórios.' });
+    // A validação do telemóvel e CPF foi temporariamente removida para o teste.
+    if (!user || !plan) {
+      return response.status(400).json({ error: 'Dados do utilizador e plano são obrigatórios.' });
     }
-
-    const sanitizedTaxId = user.taxId.replace(/\D/g, '');
-    const sanitizedCellphone = user.cellphone.replace(/\D/g, '');
 
     const apiURL = "https://api.abacatepay.com/v1/billing/create";
 
     const payload = {
-      // O campo devMode foi removido. A API agora opera em modo de produção.
-      // É CRUCIAL que os dados do cliente (taxId, cellphone) sejam válidos.
       products: [
         {
           externalId: plan.id,
@@ -45,13 +41,15 @@ export default async function handler(
       methods: ["PIX"],
       returnUrl: "https://tracker-bet-96pu.vercel.app/planos",
       completionUrl: "https://tracker-bet-96pu.vercel.app/",
-      customer: {
-          id: user.uid,
-          name: user.displayName || user.email,
-          email: user.email,
-          taxId: sanitizedTaxId,
-          cellphone: sanitizedCellphone,
-      },
+      // NOVO DEBUG: O objeto 'customer' foi comentado para testar se a página
+      // do AbacatePay consegue recolher os dados diretamente.
+      // customer: {
+      //     id: user.uid,
+      //     name: user.displayName || user.email,
+      //     email: user.email,
+      //     taxId: user.taxId.replace(/\D/g, ''),
+      //     cellphone: user.cellphone.replace(/\D/g, ''),
+      // },
       metadata: {
         planId: plan.id,
         userId: user.uid,
