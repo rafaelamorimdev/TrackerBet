@@ -9,6 +9,7 @@ export interface Bet {
   result: 'green' | 'red' | 'reembolso' | 'pending';
   profit: number;
   createdAt: Date;
+  sport: string;
 }
 
 
