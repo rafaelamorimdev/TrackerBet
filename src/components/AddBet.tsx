@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Plus, Calculator, AlertCircle, CheckCircle } from 'lucide-react';
+import { Plus, Calculator, AlertCircle, CheckCircle, Repeat } from 'lucide-react';
 import { useBets } from '../hooks/useBets';
 import { useAuth } from '../hooks/useAuth';
 
 
 export const AddBet: React.FC = () => {
-  const { addBet } = useBets();
+  // CORREÇÃO: Obtém a lista de 'bets' do hook para encontrar a última aposta.
+  const { addBet, bets } = useBets();
   const { user } = useAuth();
   
   const [formData, setFormData] = useState({
@@ -34,13 +35,33 @@ export const AddBet: React.FC = () => {
         stake: parseFloat(formData.stake)
       });
 
+      // A variável 'lastSubmittedBet' foi removida pois não estava a ser utilizada.
+      
       setMessage({ type: 'success', text: 'Aposta adicionada com sucesso! Estado: Pendente' });
       setFormData({ game: '', market: '', odd: '', stake: '' });
+
     } catch (error) {
       const errorText = error instanceof Error ? error.message : 'Erro ao adicionar aposta. Tente novamente.';
       setMessage({ type: 'error', text: errorText });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // NOVA FUNCIONALIDADE: Preenche o formulário com os dados da última aposta.
+  const handleRepeatLastBet = () => {
+    // A lista de 'bets' já vem ordenada do hook, então a primeira é a mais recente.
+    if (bets && bets.length > 0) {
+      const lastBet = bets[0];
+      setFormData({
+        game: lastBet.game,
+        market: lastBet.market,
+        odd: String(lastBet.odd),
+        stake: String(lastBet.stake),
+      });
+      setMessage({ type: 'success', text: 'Dados da última aposta preenchidos.' });
+    } else {
+      setMessage({ type: 'error', text: 'Nenhuma aposta anterior encontrada no histórico.' });
     }
   };
 
@@ -64,9 +85,21 @@ export const AddBet: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center mb-6">
-          <Plus className="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Nova Aposta</h1>
+        {/* CORREÇÃO: Adicionado botão para repetir a última aposta */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center">
+            <Plus className="w-6 h-6 text-blue-600 dark:text-blue-400 mr-3" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Nova Aposta</h1>
+          </div>
+          <button
+            type="button"
+            onClick={handleRepeatLastBet}
+            disabled={!bets || bets.length === 0}
+            className="flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-100 rounded-lg hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-blue-900/50 dark:text-blue-300 dark:hover:bg-blue-900 transition-colors"
+          >
+            <Repeat className="w-4 h-4 mr-2" />
+            Repetir Última
+          </button>
         </div>
 
         {message && (
