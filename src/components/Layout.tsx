@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Home, PlusSquare, History, Wallet, LogOut, User as UserIcon, Menu, X, Sun, Moon, Star } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
-import { useTheme } from '../hooks/useTheme';
-import { User } from '../types';
+import { Home, PlusSquare, History, Wallet, LogOut, User as UserIcon, Menu, X, Sun, Moon, Star, Shield } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth.ts';
+import { useTheme } from '../hooks/useTheme.ts';
+import { User } from '../types/index.ts';
 
 interface LayoutProps {
   activeTab: string;
@@ -12,26 +12,28 @@ interface LayoutProps {
 }
 
 export const Layout: React.FC<LayoutProps> = ({ activeTab, onTabChange, children, user }) => {
-  const { logout } = useAuth();
+  // 1. OBTENHA O STATUS DE ADMIN E O LOGOUT DO SEU HOOK
+  const { logout, isAdmin } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // Defina os itens de navegação padrão
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'add-bet', label: 'Nova Aposta', icon: PlusSquare },
     { id: 'history', label: 'Histórico', icon: History },
     { id: 'bankroll', label: 'Gerir Banca', icon: Wallet },
-    { id: 'pricing', label: 'Planos', icon: Star }, // Novo item de navegação
   ];
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
       <aside className={`fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out md:relative md:translate-x-0`}>
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-center h-20 border-b dark:border-gray-700">
             <h1 className="text-2xl font-bold text-blue-600">BetTracker</h1>
           </div>
           <nav className="flex-grow p-4 space-y-2">
+            {/* Renderiza os itens de navegação padrão */}
             {navItems.map(item => (
                 <button
                 key={item.id}
@@ -46,6 +48,38 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, onTabChange, children
                 {item.label}
                 </button>
             ))}
+
+            {/* 2. LÓGICA PARA MOSTRAR/ESCONDER ITENS DE MENU */}
+
+            {/* Mostra "Planos" apenas se o utilizador NÃO for admin */}
+            {!isAdmin && (
+              <button
+                onClick={() => { onTabChange('pricing'); setIsMenuOpen(false); }}
+                className={`flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                  activeTab === 'pricing'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                <Star className="w-5 h-5 mr-3" />
+                Planos
+              </button>
+            )}
+
+            {/* Mostra "Painel Admin" apenas se o utilizador FOR admin */}
+            {isAdmin && (
+              <button
+                onClick={() => { onTabChange('admin-panel'); setIsMenuOpen(false); }}
+                className={`flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                  activeTab === 'admin-panel'
+                    ? 'bg-cyan-600 text-white'
+                    : 'text-cyan-600 dark:text-cyan-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                <Shield className="w-5 h-5 mr-3" />
+                Painel Admin
+              </button>
+            )}
           </nav>
           <div className="p-4 border-t dark:border-gray-700 space-y-2">
             <button onClick={toggleTheme} className="flex items-center w-full px-4 py-3 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
@@ -72,7 +106,7 @@ export const Layout: React.FC<LayoutProps> = ({ activeTab, onTabChange, children
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-100 dark:bg-gray-900">
+        <main className="flex-1 overflow-y-auto p-6">
           {children}
         </main>
       </div>

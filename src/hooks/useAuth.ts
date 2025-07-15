@@ -1,5 +1,7 @@
+// Caminho: src/hooks/useAuth.ts
+
 import { useState, useEffect } from 'react';
-import { User, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, signInWithPopup } from 'firebase/auth';
+import { User as FirebaseUser, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, signInWithPopup } from 'firebase/auth';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../lib/firebase';
 import { User as AppUser } from '../types';
@@ -8,43 +10,61 @@ export const useAuth = () => {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isSubscriber, setIsSubscriber] = useState(false); // <-- NOVO ESTADO
 
   useEffect(() => {
     let unsubscribeFromFirestore: (() => void) | null = null;
 
-    const unsubscribeFromAuth = onAuthStateChanged(auth, (firebaseUser: User | null) => {
+    const unsubscribeFromAuth = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (unsubscribeFromFirestore) {
         unsubscribeFromFirestore();
       }
 
-      if (firebaseUser) {
-        const userDocRef = doc(db, 'users', firebaseUser.uid);
+      if (!firebaseUser) {
+        setUser(null);
+        setIsAdmin(false);
+        setIsSubscriber(false); // <-- Limpar estado de assinante
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const tokenResult = await firebaseUser.getIdTokenResult(true);
         
-        unsubscribeFromFirestore = onSnapshot(userDocRef, async (doc) => {
-          if (doc.exists()) {
-            setUser({ uid: firebaseUser.uid, ...doc.data() } as AppUser);
+        // Verifica ambos os claims: admin e plano
+        const isAdminStatus = tokenResult.claims.admin === true;
+        const isSubscriberStatus = tokenResult.claims.plan === 'premium';
+
+        setIsAdmin(isAdminStatus);
+        setIsSubscriber(isSubscriberStatus); // <-- Define o estado de assinante
+
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        unsubscribeFromFirestore = onSnapshot(userDocRef, (docSnapshot) => {
+          if (docSnapshot.exists()) {
+            setUser({ uid: firebaseUser.uid, ...docSnapshot.data() } as AppUser);
           } else {
-            // --- CORREÇÃO APLICADA AQUI ---
             const newUser: AppUser = {
               uid: firebaseUser.uid,
               email: firebaseUser.email!,
-              // Usar 'null' como fallback se o valor for undefined
               displayName: firebaseUser.displayName || null,
               photoURL: firebaseUser.photoURL || null,
               initialBankroll: 0,
               currentBankroll: 0,
             };
-            await setDoc(userDocRef, newUser);
+            setDoc(userDocRef, newUser).then(() => setUser(newUser));
           }
           setLoading(false);
-          setError(null);
-        }, (err) => {
-          console.error("Erro no listener do Firestore:", err);
-          setError("Falha ao sincronizar dados do utilizador.");
+        }, (snapshotError) => {
+          console.error("Erro no listener do Firestore:", snapshotError);
+          setError("Falha ao carregar dados do utilizador.");
           setLoading(false);
         });
-      } else {
-        setUser(null);
+
+      } catch (e) {
+        console.error("Erro durante o processamento da autenticação:", e);
+        setError("Não foi possível verificar as permissões.");
         setLoading(false);
       }
     });
@@ -56,25 +76,23 @@ export const useAuth = () => {
       }
     };
   }, []);
-  
 
-  const login = async (email: string, password: string) => {
+  const login = (email: string, password: string) => {
     return signInWithEmailAndPassword(auth, email, password);
   };
 
-  const register = async (email: string, password: string) => {
+  const register = (email: string, password: string) => {
     return createUserWithEmailAndPassword(auth, email, password);
   };
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = () => {
     return signInWithPopup(auth, googleProvider);
   };
 
-  const logout = async () => {
+  const logout = () => {
     return signOut(auth);
   };
 
-  return { user, loading, error, login, register, loginWithGoogle, logout };
+  // <-- RETORNA O NOVO ESTADO 'isSubscriber'
+  return { user, loading, isAdmin, isSubscriber, error, login, register, loginWithGoogle, logout };
 };
-
-

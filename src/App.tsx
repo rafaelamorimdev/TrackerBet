@@ -5,14 +5,17 @@ import { AddBet } from './components/AddBet';
 import { BetHistory } from './components/BetHistory';
 import { Bankroll } from './components/Bankroll';
 import { Login } from './components/Login';
-import { PricingPage } from './components/PricingPage'; // Importar a nova página
+import { PricingPage } from './components/PricingPage';
 import { useAuth } from './hooks/useAuth';
 import { ThemeProvider } from './hooks/useTheme';
 import { WifiOff } from 'lucide-react';
+import { AdminPanel } from './components/AdminPanel';
+import { Paywall } from './components/Paywall'; // 1. Importar o Paywall
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const { user, loading, error } = useAuth();
+  // 2. Obter os novos estados do hook
+  const { user, loading, isAdmin, isSubscriber, error } = useAuth();
 
   if (loading) {
     return (
@@ -29,7 +32,18 @@ function App() {
     return <Login />;
   }
 
+  // 3. Lógica para determinar o acesso
+  const hasFullAccess = isAdmin || isSubscriber;
+  const protectedTabs = ['add-bet', 'history', 'bankroll'];
+  const showPaywall = protectedTabs.includes(activeTab) && !hasFullAccess;
+
   const renderContent = () => {
+    // 4. Se for para mostrar o paywall, renderiza-o
+    if (showPaywall) {
+      return <Paywall onNavigateToPricing={() => setActiveTab('pricing')} />;
+    }
+
+    // Caso contrário, mostra o conteúdo normal
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard />;
@@ -39,8 +53,10 @@ function App() {
         return <BetHistory />;
       case 'bankroll':
         return <Bankroll />;
-      case 'pricing': // Adicionar o caso para a página de planos
+      case 'pricing':
         return <PricingPage />;
+      case 'admin-panel':
+        return <AdminPanel />;
       default:
         return <Dashboard />;
     }

@@ -4,10 +4,13 @@ import { useBets } from '../hooks/useBets';
 import { useAuth } from '../hooks/useAuth';
 
 export const Dashboard: React.FC = () => {
-  const { user } = useAuth();
-  const { bets, loading } = useBets();
+  // Renomeia os estados de 'loading' para evitar conflitos
+  const { user, isAdmin, loading: authLoading } = useAuth(); 
+  const { bets, loading: betsLoading } = useBets();
 
-  if (loading) {
+  // --- CORREÇÃO PRINCIPAL AQUI ---
+  // Mostra a mensagem de carregamento se QUALQUER UM dos hooks ainda estiver a carregar
+  if (authLoading || betsLoading) {
     return <div>A carregar dados do dashboard...</div>;
   }
   
@@ -30,6 +33,12 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+      
+      {isAdmin && (
+        <div className="p-4 mb-4 text-sm text-cyan-700 bg-cyan-100 rounded-lg dark:bg-cyan-900 dark:text-cyan-300" role="alert">
+          <span className="font-medium">Modo Administrador:</span> Você está logado como administrador.
+        </div>
+      )}
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map(stat => (
