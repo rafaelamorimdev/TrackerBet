@@ -1,7 +1,15 @@
-// Caminho: src/hooks/useAuth.ts
-
 import { useState, useEffect } from 'react';
-import { User as FirebaseUser, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, signInWithPopup } from 'firebase/auth';
+import { 
+  User as FirebaseUser, 
+  onAuthStateChanged, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  signInWithPopup,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  confirmPasswordReset // Importa a função para confirmar a nova senha
+} from 'firebase/auth';
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../lib/firebase';
 import { User as AppUser } from '../types';
@@ -11,7 +19,7 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isSubscriber, setIsSubscriber] = useState(false); // <-- NOVO ESTADO
+  const [isSubscriber, setIsSubscriber] = useState(false);
 
   useEffect(() => {
     let unsubscribeFromFirestore: (() => void) | null = null;
@@ -24,7 +32,7 @@ export const useAuth = () => {
       if (!firebaseUser) {
         setUser(null);
         setIsAdmin(false);
-        setIsSubscriber(false); // <-- Limpar estado de assinante
+        setIsSubscriber(false);
         setLoading(false);
         return;
       }
@@ -33,12 +41,11 @@ export const useAuth = () => {
         setLoading(true);
         const tokenResult = await firebaseUser.getIdTokenResult(true);
         
-        // Verifica ambos os claims: admin e plano
         const isAdminStatus = tokenResult.claims.admin === true;
         const isSubscriberStatus = tokenResult.claims.plan === 'premium';
 
         setIsAdmin(isAdminStatus);
-        setIsSubscriber(isSubscriberStatus); // <-- Define o estado de assinante
+        setIsSubscriber(isSubscriberStatus);
 
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         unsubscribeFromFirestore = onSnapshot(userDocRef, (docSnapshot) => {
@@ -55,10 +62,6 @@ export const useAuth = () => {
             };
             setDoc(userDocRef, newUser).then(() => setUser(newUser));
           }
-          setLoading(false);
-        }, (snapshotError) => {
-          console.error("Erro no listener do Firestore:", snapshotError);
-          setError("Falha ao carregar dados do utilizador.");
           setLoading(false);
         });
 
@@ -81,8 +84,10 @@ export const useAuth = () => {
     return signInWithEmailAndPassword(auth, email, password);
   };
 
-  const register = (email: string, password: string) => {
-    return createUserWithEmailAndPassword(auth, email, password);
+  const register = async (email: string, password: string) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    await sendEmailVerification(userCredential.user);
+    return userCredential;
   };
 
   const loginWithGoogle = () => {
@@ -93,6 +98,26 @@ export const useAuth = () => {
     return signOut(auth);
   };
 
-  // <-- RETORNA O NOVO ESTADO 'isSubscriber'
-  return { user, loading, isAdmin, isSubscriber, error, login, register, loginWithGoogle, logout };
+  const sendPasswordReset = (email: string) => {
+    return sendPasswordResetEmail(auth, email);
+  };
+
+  // Nova função para confirmar a redefinição de senha
+  const doConfirmPasswordReset = (code: string, newPassword: string) => {
+    return confirmPasswordReset(auth, code, newPassword);
+  };
+
+  return { 
+    user, 
+    loading, 
+    isAdmin, 
+    isSubscriber, 
+    error, 
+    login, 
+    register, 
+    loginWithGoogle, 
+    logout, 
+    sendPasswordReset, 
+    confirmPasswordReset: doConfirmPasswordReset // Exporta a nova função
+  };
 };

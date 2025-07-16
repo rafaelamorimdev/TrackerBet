@@ -10,13 +10,26 @@ import { useAuth } from './hooks/useAuth';
 import { ThemeProvider } from './hooks/useTheme';
 import { WifiOff } from 'lucide-react';
 import { AdminPanel } from './components/AdminPanel';
-import { Paywall } from './components/Paywall'; // 1. Importar o Paywall
+import { Paywall } from './components/Paywall';
+import { ResetPassword } from './components/ResetPassword';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  // 2. Obter os novos estados do hook
   const { user, loading, isAdmin, isSubscriber, error } = useAuth();
 
+  // --- CORREÇÃO APLICADA AQUI ---
+  // 1. Primeiro, verificamos se o URL é para uma ação especial, como redefinir a senha.
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('mode') === 'resetPassword') {
+    // Se for, mostramos a página de redefinição e paramos aqui.
+    return (
+      <ThemeProvider>
+        <ResetPassword />
+      </ThemeProvider>
+    );
+  }
+
+  // 2. Só depois de verificar o URL, continuamos com a lógica normal.
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
@@ -28,22 +41,20 @@ function App() {
     );
   }
 
+  // 3. Se não for uma ação especial e não estiver a carregar, verificamos se o utilizador está logado.
   if (!user) {
     return <Login />;
   }
 
-  // 3. Lógica para determinar o acesso
   const hasFullAccess = isAdmin || isSubscriber;
   const protectedTabs = ['add-bet', 'history', 'bankroll'];
   const showPaywall = protectedTabs.includes(activeTab) && !hasFullAccess;
 
   const renderContent = () => {
-    // 4. Se for para mostrar o paywall, renderiza-o
     if (showPaywall) {
       return <Paywall onNavigateToPricing={() => setActiveTab('pricing')} />;
     }
 
-    // Caso contrário, mostra o conteúdo normal
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard />;
