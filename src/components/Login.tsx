@@ -13,35 +13,46 @@ const GoogleIcon = () => (
 );
 
 export const Login: React.FC = () => {
-  const { login, register, loginWithGoogle, sendPasswordReset, error } = useAuth();
+  const { login, register, loginWithGoogle, sendPasswordReset } = useAuth();
   const [view, setView] = useState<'login' | 'register' | 'forgotPassword'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
     setSuccessMessage(null);
+    setLoading(true);
     try {
       if (view === 'login') {
         await login(email, password);
       } else {
         await register(email, password);
-        setSuccessMessage('Conta criada! Um e-mail de verificação foi enviado para a sua caixa de entrada.');
-        setView('login'); // Volta para a tela de login após o registo
+        setSuccessMessage('Conta criada! Um e-mail de verificação foi enviado.');
+        setView('login');
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        setFormError('E-mail ou senha inválidos.');
-      } else if (err.code === 'auth/email-already-in-use') {
-        setFormError('Este e-mail já está em uso.');
-      } else {
-        setFormError('Ocorreu um erro. Tente novamente.');
-      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Ocorreu um erro desconhecido.';
+      setFormError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleGoogleLogin = async () => {
+    setFormError(null);
+    setGoogleLoading(true);
+    try {
+      await loginWithGoogle();
+    } catch {
+      setFormError('Não foi possível fazer o login com o Google.');
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -49,12 +60,14 @@ export const Login: React.FC = () => {
     e.preventDefault();
     setFormError(null);
     setSuccessMessage(null);
+    setLoading(true);
     try {
       await sendPasswordReset(email);
-      // --- MENSAGEM ATUALIZADA AQUI ---
       setSuccessMessage('Link enviado! Verifique a sua caixa de entrada e a pasta de Spam.');
     } catch {
       setFormError('Não foi possível enviar o e-mail. Verifique se o endereço está correto.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -80,7 +93,6 @@ export const Login: React.FC = () => {
 
         <div className="bg-card border border-card-border rounded-2xl p-8 shadow-lg">
           {view === 'forgotPassword' ? (
-            // --- Formulário de Recuperação de Senha ---
             <div>
               <button onClick={() => changeView('login')} className="flex items-center text-sm text-secondary-text mb-6 hover:text-primary-text">
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -95,13 +107,12 @@ export const Login: React.FC = () => {
                 </div>
                 {successMessage && <p className="text-sm text-green-400 text-center">{successMessage}</p>}
                 {formError && <p className="text-sm text-red-400 text-center">{formError}</p>}
-                <button type="submit" className="w-full font-bold text-lg px-8 py-3 rounded-xl text-white bg-gradient-to-r from-accent-start to-accent-end hover:opacity-90 transition-opacity">
-                  Enviar Link
+                <button type="submit" disabled={loading} className="w-full font-bold text-lg px-8 py-3 rounded-xl text-white bg-gradient-to-r from-accent-start to-accent-end hover:opacity-90 transition-opacity disabled:opacity-50">
+                  {loading ? 'A enviar...' : 'Enviar Link'}
                 </button>
               </form>
             </div>
           ) : (
-            // --- Formulário de Login/Registo ---
             <div>
               <div className="flex border-b border-card-border mb-6">
                 <button onClick={() => changeView('login')} className={`flex-1 py-3 font-semibold transition-colors ${view === 'login' ? 'text-primary-text border-b-2 border-accent-start' : 'text-secondary-text'}`}>Entrar</button>
@@ -121,15 +132,18 @@ export const Login: React.FC = () => {
                 <div className="text-right">
                   <button type="button" onClick={() => changeView('forgotPassword')} className="text-xs text-secondary-text hover:text-primary-text font-semibold">Esqueceu a senha?</button>
                 </div>
-                {(error || formError) && <p className="text-sm text-red-400 text-center">{formError || 'Ocorreu um erro.'}</p>}
-                <button type="submit" className="w-full font-bold text-lg px-8 py-3 rounded-xl text-white bg-gradient-to-r from-accent-start to-accent-end hover:opacity-90 transition-opacity">{view === 'login' ? 'Entrar' : 'Criar Conta'}</button>
+                {formError && <p className="text-sm text-red-400 text-center">{formError}</p>}
+                <button type="submit" disabled={loading} className="w-full font-bold text-lg px-8 py-3 rounded-xl text-white bg-gradient-to-r from-accent-start to-accent-end hover:opacity-90 transition-opacity disabled:opacity-50">{loading ? 'Aguarde...' : (view === 'login' ? 'Entrar' : 'Criar Conta')}</button>
               </form>
               <div className="flex items-center my-6">
                 <hr className="flex-grow border-card-border" />
                 <span className="mx-4 text-xs text-secondary-text">OU</span>
                 <hr className="flex-grow border-card-border" />
               </div>
-              <button onClick={loginWithGoogle} className="w-full flex items-center justify-center bg-white/5 border border-card-border text-primary-text font-semibold py-3 rounded-lg hover:bg-white/10 transition-colors"><GoogleIcon />Continuar com o Google</button>
+              <button onClick={handleGoogleLogin} disabled={googleLoading} className="w-full flex items-center justify-center bg-white/5 border border-card-border text-primary-text font-semibold py-3 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50">
+                {googleLoading ? <div className="w-5 h-5 border-2 border-white/50 border-t-white rounded-full animate-spin mr-3"></div> : <GoogleIcon />}
+                {googleLoading ? 'Aguarde...' : 'Continuar com o Google'}
+              </button>
             </div>
           )}
         </div>
