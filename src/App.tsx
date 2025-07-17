@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
 import { AddBet } from './components/AddBet';
@@ -12,16 +12,24 @@ import { WifiOff } from 'lucide-react';
 import { AdminPanel } from './components/AdminPanel';
 import { Paywall } from './components/Paywall';
 import { ResetPassword } from './components/ResetPassword';
- 
+
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const { user, loading, isAdmin, isSubscriber, error } = useAuth();
- 
-  // --- CORREÇÃO APLICADA AQUI ---
-  // 1. Primeiro, verificamos se o URL é para uma ação especial, como redefinir a senha.
+
+  // Lógica para ler o URL quando a aplicação carrega
+  useEffect(() => {
+    const path = window.location.pathname;
+    const route = path.substring(1); 
+
+    if (route === 'planos') {
+      setActiveTab('pricing');
+    }
+  }, []);
+
+  // Lógica para lidar com o fluxo de redefinição de senha
   const params = new URLSearchParams(window.location.search);
   if (params.get('mode') === 'resetPassword') {
-    // Se for, mostramos a página de redefinição e paramos aqui.
     return (
       <ThemeProvider>
         <ResetPassword />
@@ -29,7 +37,6 @@ function App() {
     );
   }
 
-  // 2. Só depois de verificar o URL, continuamos com a lógica normal.
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
@@ -41,7 +48,6 @@ function App() {
     );
   }
 
-  // 3. Se não for uma ação especial e não estiver a carregar, verificamos se o utilizador está logado.
   if (!user) {
     return <Login />;
   }
