@@ -109,7 +109,6 @@ export const PricingPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
 
-  // --- CORREÇÃO: Constantes não utilizadas foram removidas ---
   const plans: Plan[] = [
     { id: 'monthly', name: 'Mensal', priceId: 'price_mensal_id', price: 29.90, duration: '/mês' },
     { id: 'quarterly', name: 'Trimestral', priceId: 'price_trimestral_id', price: 66.00, duration: '/trimestre', isPopular: true, discountInfo: `Poupe 26%` },
@@ -132,7 +131,9 @@ export const PricingPage: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          priceId: selectedPlan.priceId,
+          // --- CORREÇÃO APLICADA AQUI ---
+          // Enviando o objeto completo do plano, como a sua API parece esperar
+          plan: selectedPlan,
           user: { 
             uid: user.uid, 
             email: user.email, 
@@ -144,7 +145,10 @@ export const PricingPage: React.FC = () => {
       });
 
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Falha ao comunicar com o servidor.');
+      if (!response.ok) {
+        // Mostra a mensagem de erro específica vinda da API
+        throw new Error(result.error || 'Falha ao comunicar com o servidor.');
+      }
       
       if (result.checkoutUrl) {
         window.location.href = result.checkoutUrl;
