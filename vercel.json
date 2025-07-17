@@ -1,11 +1,11 @@
 {
   "routes": [
     {
-      "handle": "filesystem"
-    },
-    {
       "src": "^/$",
       "dest": "/landing.html"
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "src": "/.*",
