@@ -22,6 +22,7 @@
         .cta-button {
             background: linear-gradient(90deg, #38BDF8, #818CF8);
             transition: all 0.3s ease;
+            cursor: pointer; /* Garante que o cursor seja uma mãozinha */
         }
         .cta-button:hover {
             transform: translateY(-2px);
@@ -32,7 +33,7 @@
 <body>
 
     <!-- Cabeçalho -->
-    <header class="absolute top-0 left-0 right-0 z-10 py-6 px-4 sm:px-6 lg:px-8">
+    <header class="absolute top-0 left-0 right-0 z-20 py-6 px-4 sm:px-6 lg:px-8">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold tracking-tight">Betly</h1>
            
@@ -44,7 +45,8 @@
     <main>
         <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-28 text-center overflow-hidden">
             <div class="absolute inset-0 bg-grid-gray-700/20 [mask-image:linear-gradient(to_bottom,white_20%,transparent_100%)]"></div>
-            <div class="container mx-auto px-4">
+            {/* --- CORREÇÃO APLICADA AQUI: Adicionado 'relative z-10' para colocar o conteúdo à frente do fundo --- */}
+            <div class="container mx-auto px-4 relative z-10">
                 <div class="max-w-4xl mx-auto">
                     <h1 class="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tighter mb-6">
                         A Ferramenta Definitiva para o <span class="gradient-text">Apostador Moderno</span>
@@ -112,8 +114,8 @@
         <section id="pricing" class="py-20 sm:py-28 bg-gray-900/50">
             <div class="container mx-auto px-4">
                 <div class="text-center max-w-3xl mx-auto mb-16">
-                    <h2 class="text-3xl sm:text-4xl font-bold mb-4">Escolha o Plano Premium</h2>
-                    <p class="text-gray-400 text-lg">Desbloqueie todo o poder do Betly.</p>
+                    <h2 class="text-3xl sm:text-4xl font-bold mb-4">Escolha o Plano Certo para Si</h2>
+                    <p class="text-gray-400 text-lg">Comece gratuitamente ou desbloqueie todo o poder do Betly com o nosso plano Premium.</p>
                 </div>
                 <div class="flex flex-col lg:flex-row justify-center items-center gap-8">
                     <!-- Plano Premium -->
@@ -121,7 +123,7 @@
                         <h3 class="text-2xl font-bold text-center mb-2">Premium</h3>
                         <p class="text-gray-400 text-center mb-6">Acesso ilimitado a todas as funcionalidades.</p>
                         <p class="text-5xl font-extrabold text-center mb-6">
-                            R$29<span class="text-lg font-medium text-gray-400">,90/mês</span>
+                            R$19<span class="text-lg font-medium text-gray-400">,90/mês</span>
                         </p>
                         <ul class="space-y-4 text-gray-300 mb-8">
                             <li class="flex items-center"><span class="text-cyan-500 mr-3">✔</span>Apostas ilimitadas</li>
