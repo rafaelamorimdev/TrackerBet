@@ -141,7 +141,7 @@ export const PricingPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
 
-  const monthlyPrice = 30;
+  const monthlyPrice = 29.90;
   const quarterlyPricePerMonth = monthlyPrice * (1 - 0.25);
   const annualPricePerMonth = (monthlyPrice * 12 * (1 - 0.40)) / 12;
 
@@ -209,7 +209,7 @@ export const PricingPage: React.FC = () => {
       <div className="bg-gray-100 dark:bg-gray-900 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl">Escolha o Plano Ideal para Si</h1>
+            <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white sm:text-5xl">Escolha o Plano Ideal</h1>
             <p className="mt-4 text-xl text-gray-600 dark:text-gray-400">Acesso completo à plataforma. Escolha o período e aproveite os descontos.</p>
           </div>
 
