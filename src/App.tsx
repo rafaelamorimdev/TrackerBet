@@ -12,11 +12,11 @@ import { WifiOff } from 'lucide-react';
 import { AdminPanel } from './components/AdminPanel';
 import { Paywall } from './components/Paywall';
 import { ResetPassword } from './components/ResetPassword';
-
+ 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const { user, loading, isAdmin, isSubscriber, error } = useAuth();
-
+ 
   // --- CORREÇÃO APLICADA AQUI ---
   // 1. Primeiro, verificamos se o URL é para uma ação especial, como redefinir a senha.
   const params = new URLSearchParams(window.location.search);
