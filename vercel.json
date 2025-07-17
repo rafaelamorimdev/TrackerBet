@@ -1,6 +1,17 @@
 {
   "routes": [
     {
+      "src": "/(?<query>\\?.*)?",
+      "has": [
+        {
+          "type": "query",
+          "key": "mode",
+          "value": "(verifyEmail|resetPassword)"
+        }
+      ],
+      "dest": "/index.html"
+    },
+    {
       "src": "^/$",
       "dest": "/landing.html"
     },

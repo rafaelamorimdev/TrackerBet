@@ -34,7 +34,7 @@ export const ResetPassword: React.FC = () => {
     try {
       await confirmPasswordReset(actionCode, newPassword);
       setSuccess("Senha alterada com sucesso! Já pode fechar esta página e fazer login com a sua nova senha.");
-    } catch {
+    } catch  {
       setError("Ocorreu um erro ao alterar a senha. O link pode ter expirado. Por favor, tente novamente.");
     } finally {
       setLoading(false);
