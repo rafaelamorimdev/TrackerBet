@@ -1,8 +1,15 @@
 {
   "routes": [
     {
-      "src": "/",
+      "handle": "filesystem"
+    },
+    {
+      "src": "^/$",
       "dest": "/landing.html"
+    },
+    {
+      "src": "/.*",
+      "dest": "/index.html"
     }
   ]
 }
