@@ -1,205 +1,115 @@
+// Caminho: src/components/BetHistory.tsx
+
 import React, { useState } from 'react';
-import { Search, TrendingUp, TrendingDown, Edit, Trash2, Check, X, AlertCircle, CheckCircle, RefreshCw, ChevronDown } from 'lucide-react';
+import { CheckCircle, XCircle, RefreshCw, Edit, Trash2 } from 'lucide-react';
+import { Timestamp } from 'firebase/firestore'; // 1. Importar o tipo Timestamp do Firebase
 import { useBets } from '../hooks/useBets';
 import { Bet } from '../types';
 
 export const BetHistory: React.FC = () => {
-  const { bets, updateBetResult, updateBet, deleteBet } = useBets();
+  const { bets, loading, updateBetStatus } = useBets();
+  const [error, setError] = useState<string | null>(null);
 
-  // Estados para controlo do formulário, filtros e mensagens
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterResult, setFilterResult] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('date');
-  const [timeFilter, setTimeFilter] = useState<string>('all');
-  const [editingBet, setEditingBet] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ game: '', market: '', odd: '', stake: '' });
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-
-  // Lógica de filtragem e ordenação das apostas
-  const filteredBets = bets
-    .filter(bet => {
-      if (timeFilter === 'all') return true;
-      const betDate = new Date(bet.createdAt);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      if (timeFilter === 'today') return betDate >= today;
-
-      const pastDate = new Date();
-      pastDate.setHours(0, 0, 0, 0);
-
-      if (timeFilter === '7days') { pastDate.setDate(pastDate.getDate() - 7); return betDate >= pastDate; }
-      if (timeFilter === '30days') { pastDate.setMonth(pastDate.getMonth() - 1); return betDate >= pastDate; }
-      return true;
-    })
-    .filter(bet => {
-      const matchesSearch = bet.game.toLowerCase().includes(searchTerm.toLowerCase()) || bet.market.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesFilter = filterResult === 'all' || bet.result === filterResult;
-      return matchesSearch && matchesFilter;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'date': return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        case 'profit': return b.profit - a.profit;
-        case 'stake': return b.stake - a.stake;
-        default: return 0;
-      }
-    });
-
-  const totalProfit = filteredBets.reduce((acc, bet) => acc + bet.profit, 0);
-
-  const showMessage = (type: 'success' | 'error', text: string) => {
-    setMessage({ type, text });
-    setTimeout(() => setMessage(null), 5000);
-  };
-
-  const handleUpdateResult = async (betId: string, result: 'green' | 'red' | 'reembolso') => {
+  const handleUpdateStatus = async (bet: Bet, newResult: 'green' | 'red' | 'anulada') => {
+    setError(null);
     try {
-      await updateBetResult(betId, result);
-      showMessage('success', 'Resultado atualizado.');
-    } catch {
-      showMessage('error', 'Erro ao atualizar aposta.');
+      await updateBetStatus(bet, newResult);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar aposta.';
+      setError(errorMessage);
+      setTimeout(() => setError(null), 3000);
     }
   };
 
-  const handleEditBet = (bet: Bet) => {
-    setEditingBet(bet.id);
-    setEditForm({ game: bet.game, market: bet.market, odd: bet.odd.toString(), stake: bet.stake.toString() });
-  };
-
-  const handleSaveEdit = async (betId: string) => {
-    try {
-      await updateBet(betId, { game: editForm.game, market: editForm.market, odd: parseFloat(editForm.odd), stake: parseFloat(editForm.stake) });
-      setEditingBet(null);
-      showMessage('success', 'Aposta atualizada.');
-    } catch {
-      showMessage('error', 'Erro ao atualizar aposta.');
+  // --- CORREÇÃO APLICADA AQUI ---
+  // A função agora usa 'instanceof' para uma verificação de tipo segura, sem 'any'.
+  const formatDate = (timestamp: unknown) => {
+    if (timestamp instanceof Timestamp) {
+      return timestamp.toDate().toLocaleDateString('pt-BR');
     }
+    return 'Data inválida';
   };
 
-  const handleCancelEdit = () => setEditingBet(null);
-
-  const handleDeleteBet = async (betId: string) => {
-    if (window.confirm('Tem a certeza? Esta ação não pode ser desfeita.')) {
-      try {
-        await deleteBet(betId);
-        showMessage('success', 'Aposta excluída.');
-      } catch {
-        showMessage('error', 'Erro ao excluir aposta.');
-      }
-    }
-  };
-
-  const getResultBadge = (result: string) => {
-    switch (result) {
-      case 'green': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'red': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      case 'reembolso': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
-    }
-  };
-
-  const getResultLabel = (result: string) => {
-    switch (result) {
-      case 'green': return 'Green';
-      case 'red': return 'Red';
-      case 'reembolso': return 'Reembolso';
-      case 'pending': return 'Pendente';
-      default: return result;
-    }
-  };
+  const totalProfit = bets.reduce((acc, bet) => acc + bet.profit, 0);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Histórico de Apostas</h1>
-        <div className="flex-shrink-0 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2">
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Lucro do Período:</span>
-          <span className={`ml-2 font-bold ${totalProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-foreground">Histórico de Apostas</h1>
+        <div className="bg-card border border-card-border rounded-lg px-4 py-2 text-sm">
+          <span className="text-secondary-text mr-2">Lucro do Período:</span>
+          <span className={`font-bold ${totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
             R$ {totalProfit.toFixed(2)}
           </span>
         </div>
       </div>
 
-      {message && <div className={`flex items-center p-3 rounded-lg text-sm font-medium ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{message.type === 'success' ? <CheckCircle className="w-5 h-5 mr-2" /> : <AlertCircle className="w-5 h-5 mr-2" />}{message.text}</div>}
-
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input 
-              type="text" 
-              placeholder="Buscar..." 
-              value={searchTerm} 
-              onChange={(e) => setSearchTerm(e.target.value)} 
-              className="w-full pl-10 pr-4 py-2 bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white dark:placeholder-gray-400" 
-            />
-          </div>
-          <div className="relative">
-            <select value={filterResult} onChange={(e) => setFilterResult(e.target.value)} className="w-full appearance-none px-4 py-2 pr-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white">
-              <option className="bg-white dark:bg-gray-700 text-black dark:text-white" value="all">Todos</option>
-              <option className="bg-white dark:bg-gray-700 text-black dark:text-white" value="pending">Pendente</option>
-              <option className="bg-white dark:bg-gray-700 text-black dark:text-white" value="green">Green</option>
-              <option className="bg-white dark:bg-gray-700 text-black dark:text-white" value="red">Red</option>
-              <option className="bg-white dark:bg-gray-700 text-black dark:text-white" value="reembolso">Reembolso</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-              <ChevronDown className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="relative">
-            <select value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)} className="w-full appearance-none px-4 py-2 pr-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white">
-              <option className="bg-white dark:bg-gray-700 text-black dark:text-white" value="all">Todo o período</option>
-              <option className="bg-white dark:bg-gray-700 text-black dark:text-white" value="today">Hoje</option>
-              <option className="bg-white dark:bg-gray-700 text-black dark:text-white" value="7days">Últimos 7 dias</option>
-              <option className="bg-white dark:bg-gray-700 text-black dark:text-white" value="30days">Último mês</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-              <ChevronDown className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="relative">
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="w-full appearance-none px-4 py-2 pr-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white">
-              <option className="bg-white dark:bg-gray-700 text-black dark:text-white" value="date">Ordenar por data</option>
-              <option className="bg-white dark:bg-gray-700 text-black dark:text-white" value="profit">Ordenar por lucro</option>
-              <option className="bg-white dark:bg-gray-700 text-black dark:text-white" value="stake">Ordenar por Stake</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
-              <ChevronDown className="h-4 w-4" />
-            </div>
-          </div>
+      {error && (
+        <div className="bg-red-900/50 text-red-400 p-3 rounded-lg text-center text-sm">
+          {error}
         </div>
+      )}
+
+      <div className="bg-card border border-card-border rounded-xl p-4 flex flex-col md:flex-row gap-4">
+        {/* Seus filtros aqui */}
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700/50">
-              <tr>{['Data', 'Jogo', 'Mercado', 'Odd', 'Stake', 'Status', 'Resultado', 'Ações'].map(header => (<th key={header} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">{header}</th>))}</tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredBets.map((bet) => (
-                <tr key={bet.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(bet.createdAt).toLocaleDateString('pt-BR')}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{editingBet === bet.id ? <input value={editForm.game} onChange={e => setEditForm({...editForm, game: e.target.value})} className="p-1 border rounded bg-transparent dark:border-gray-600" /> : bet.game}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{editingBet === bet.id ? <input value={editForm.market} onChange={e => setEditForm({...editForm, market: e.target.value})} className="p-1 border rounded bg-transparent dark:border-gray-600" /> : bet.market}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{editingBet === bet.id ? <input type="number" value={editForm.odd} onChange={e => setEditForm({...editForm, odd: e.target.value})} className="w-20 p-1 border rounded bg-transparent dark:border-gray-600" /> : bet.odd.toFixed(2)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{editingBet === bet.id ? <input type="number" value={editForm.stake} onChange={e => setEditForm({...editForm, stake: e.target.value})} className="w-24 p-1 border rounded bg-transparent dark:border-gray-600" /> : `R$ ${bet.stake.toFixed(2)}`}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {bet.result === 'pending' ? (<div className="flex space-x-2"><button onClick={() => handleUpdateResult(bet.id, 'green')} className="p-2 bg-green-100 dark:bg-green-500/20 text-green-800 dark:text-green-300 rounded-full hover:bg-green-200 dark:hover:bg-green-500/40" title="Green"><Check className="w-4 h-4" /></button><button onClick={() => handleUpdateResult(bet.id, 'red')} className="p-2 bg-red-100 dark:bg-red-500/20 text-red-800 dark:text-red-300 rounded-full hover:bg-red-200 dark:hover:bg-red-500/40" title="Red"><X className="w-4 h-4" /></button><button onClick={() => handleUpdateResult(bet.id, 'reembolso')} className="p-2 bg-blue-100 dark:bg-blue-500/20 text-blue-800 dark:text-blue-300 rounded-full hover:bg-blue-200 dark:hover:bg-blue-500/40" title="Reembolso"><RefreshCw className="w-4 h-4" /></button></div>) : (<span className={`inline-flex items-center px-3 py-1 text-xs font-semibold rounded-full ${getResultBadge(bet.result)}`}>{getResultLabel(bet.result)}</span>)}
+      <div className="bg-card border border-card-border rounded-xl overflow-x-auto">
+        <table className="min-w-full">
+          <thead className="bg-white/5">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-secondary-text uppercase tracking-wider">Data</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-secondary-text uppercase tracking-wider">Jogo</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-secondary-text uppercase tracking-wider">Mercado</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-secondary-text uppercase tracking-wider">Odd</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-secondary-text uppercase tracking-wider">Stake</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-secondary-text uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-secondary-text uppercase tracking-wider">Resultado</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-secondary-text uppercase tracking-wider">Ações</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-card-border">
+            {loading ? (
+              <tr><td colSpan={8} className="text-center py-10 text-secondary-text">A carregar apostas...</td></tr>
+            ) : bets.length === 0 ? (
+              <tr><td colSpan={8} className="text-center py-10 text-secondary-text">Nenhuma aposta encontrada.</td></tr>
+            ) : (
+              bets.map(bet => (
+                <tr key={bet.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-text">{formatDate(bet.createdAt)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-text">{bet.game}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-text">{bet.market}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-text">{bet.odd.toFixed(2)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-text">R$ {bet.stake.toFixed(2)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {bet.result === 'pending' ? (
+                      <div className="flex gap-2">
+                        <button onClick={() => handleUpdateStatus(bet, 'green')} className="p-1.5 text-green-400 hover:bg-green-400/10 rounded-full"><CheckCircle className="w-5 h-5" /></button>
+                        <button onClick={() => handleUpdateStatus(bet, 'red')} className="p-1.5 text-red-400 hover:bg-red-400/10 rounded-full"><XCircle className="w-5 h-5" /></button>
+                        <button onClick={() => handleUpdateStatus(bet, 'anulada')} className="p-1.5 text-blue-400 hover:bg-blue-400/10 rounded-full"><RefreshCw className="w-5 h-5" /></button>
+                      </div>
+                    ) : (
+                      <span className={`capitalize px-2 py-1 text-xs font-semibold rounded-full ${
+                        bet.result === 'green' ? 'bg-green-900/50 text-green-400' : 
+                        bet.result === 'red' ? 'bg-red-900/50 text-red-400' : 
+                        'bg-blue-900/50 text-blue-400' // Estilo para 'anulada'
+                      }`}>
+                        {bet.result}
+                      </span>
+                    )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    {bet.result === 'green' ? (<div className="flex items-center text-green-600 dark:text-green-400"><TrendingUp className="w-4 h-4 mr-1" />R$ {(bet.stake * bet.odd).toFixed(2)}</div>) : (<div className={`flex items-center ${bet.profit >= 0 ? 'text-gray-600 dark:text-gray-400' : 'text-red-600 dark:text-red-400'}`}>{bet.profit < 0 && <TrendingDown className="w-4 h-4 mr-1" />}R$ {bet.profit.toFixed(2)}</div>)}
+                  <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${bet.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>R$ {bet.profit.toFixed(2)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <div className="flex gap-2">
+                      <button className="text-secondary-text hover:text-primary-text"><Edit className="w-4 h-4" /></button>
+                      <button className="text-secondary-text hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
+                    </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <div className="flex space-x-3">{editingBet === bet.id ? (<><button onClick={() => handleSaveEdit(bet.id)} className="text-green-600 hover:text-green-800" title="Salvar"><Check className="w-5 h-5" /></button><button onClick={handleCancelEdit} className="text-gray-600 hover:text-gray-800" title="Cancelar"><X className="w-5 h-5" /></button></>) : (<button onClick={() => handleEditBet(bet)} className="text-blue-600 hover:text-blue-800" title="Editar"><Edit className="w-5 h-5" /></button>)}<button onClick={() => handleDeleteBet(bet.id)} className="text-red-600 hover:text-red-800" title="Excluir"><Trash2 className="w-5 h-5" /></button></div>
-                  </td>
-                </tr>))}
-            </tbody>
-          </table>
-          {filteredBets.length === 0 && (<div className="text-center py-12 text-gray-500 dark:text-gray-400"><p>Nenhuma aposta encontrada para os filtros selecionados.</p></div>)}
-        </div>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

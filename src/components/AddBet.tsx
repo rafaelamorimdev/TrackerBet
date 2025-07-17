@@ -14,14 +14,44 @@ interface FormData {
 }
 
 export const AddBet: React.FC = () => {
-  const { addBet } = useBets();
+  // --- CORREÇÃO: Obter a lista de apostas do hook ---
+  const { addBet, bets } = useBets();
   const { user } = useAuth();
   const [activeSport, setActiveSport] = useState('futebol');
   const [formData, setFormData] = useState<FormData>({ game: '', market: '', odd: '', stake: '' });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-  // --- LÓGICA ATUALIZADA ---
+  // --- LISTAS DE MERCADOS SEPARADAS POR DESPORTO ---
+  const futebolMarketOptions = [
+    'Vencedor',
+    'Empate',
+    'Dupla Hipótese',
+    'Ambas as Equipas Marcam',
+    'Total de Golos (Mais/Menos)',
+    'Handicap Asiático',
+    'Total de Cantos (Mais/Menos)',
+    'Total de Cartões (Mais/Menos)',
+    'Finalizações (Mais/Menos)',
+    'Desarmes (Mais/Menos)',
+    'Bingo',
+    'Cartão Jogador',
+    'Gol Jogador',
+    'Passes',
+  ];
+
+  const basqueteMarketOptions = [
+    'Vencedor da Partida (Moneyline)',
+    'Handicap de Pontos',
+    'Total de Pontos (Mais/Menos)',
+    'Pontos do Jogador (Mais/Menos)',
+    'Assistências do Jogador (Mais/Menos)',
+    'Ressaltos do Jogador (Mais/Menos)',
+  ];
+
+  // Escolhe a lista de mercados com base no desporto ativo
+  const marketOptions = activeSport === 'futebol' ? futebolMarketOptions : basqueteMarketOptions;
+
   // Função para lidar com as mudanças nos campos do formulário
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -50,12 +80,29 @@ export const AddBet: React.FC = () => {
       await addBet(betData);
       setMessage({ type: 'success', text: 'Aposta adicionada com sucesso!' });
       setFormData({ game: '', market: '', odd: '', stake: '' }); // Limpa o formulário
-    } 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      catch (error: any) {
-      setMessage({ type: 'error', text: error.message || 'Não foi possível adicionar a aposta.' });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Não foi possível adicionar a aposta.';
+      setMessage({ type: 'error', text: errorMessage });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // --- NOVA FUNÇÃO PARA REPETIR A ÚLTIMA APOSTA ---
+  const handleRepeatLastBet = () => {
+    // Verifica se existe alguma aposta no histórico
+    if (bets && bets.length > 0) {
+      // A lista já vem ordenada da mais recente para a mais antiga do hook useBets
+      const lastBet = bets[0];
+      setFormData({
+        game: lastBet.game,
+        market: lastBet.market,
+        odd: String(lastBet.odd),
+        stake: String(lastBet.stake),
+      });
+      setMessage({ type: 'success', text: 'Última aposta carregada!' });
+    } else {
+      setMessage({ type: 'error', text: 'Nenhuma aposta anterior encontrada.' });
     }
   };
 
@@ -69,7 +116,8 @@ export const AddBet: React.FC = () => {
             </div>
             <h1 className="text-2xl font-bold text-primary-text">Nova Aposta</h1>
           </div>
-          <button className="flex items-center text-sm text-secondary-text hover:text-primary-text transition-colors">
+          {/* --- BOTÃO AGORA FUNCIONAL --- */}
+          <button onClick={handleRepeatLastBet} className="flex items-center text-sm text-secondary-text hover:text-primary-text transition-colors">
             <Repeat className="w-4 h-4 mr-2" />
             Repetir Última
           </button>
@@ -87,14 +135,26 @@ export const AddBet: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-sm font-medium text-secondary-text mb-2 block">Jogo</label>
-            <input name="game" value={formData.game} onChange={handleChange} type="text" placeholder="Ex: Real Madrid vs Juventus" className="w-full bg-background border border-card-border rounded-lg py-3 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start" />
+            {/* --- CORREÇÃO APLICADA AQUI --- */}
+            <input 
+              name="game" 
+              value={formData.game} 
+              onChange={handleChange} 
+              type="text"  
+              placeholder={activeSport === 'futebol' ? "Ex: Real Madrid vs Juventus" : "Ex: Lakers vs Warriors"}
+              className="w-full bg-background border border-card-border rounded-lg py-3 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start" 
+            />
           </div>
           <div>
             <label className="text-sm font-medium text-secondary-text mb-2 block">Mercado</label>
             <select name="market" value={formData.market} onChange={handleChange} className="w-full bg-background border border-card-border rounded-lg py-3 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start">
               <option value="">Selecione o mercado</option>
-              <option value="Resultado Final">Resultado Final</option>
-              <option value="Mais/Menos Golos">Mais/Menos Golos</option>
+            
+              {marketOptions.map(market => (
+                <option key={market} value={market}>
+                  {market}
+                </option>
+              ))}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-4">

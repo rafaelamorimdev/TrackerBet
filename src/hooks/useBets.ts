@@ -1,7 +1,7 @@
 // Caminho: src/hooks/useBets.ts
 
 import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, orderBy, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, addDoc, Timestamp, doc, runTransaction, increment } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from './useAuth';
 import { Bet } from '../types';
@@ -38,7 +38,6 @@ export const useBets = () => {
     return () => unsubscribe();
   }, [user, isAdmin, isSubscriber]); 
 
-  // --- FUNÇÃO ADICIONADA AQUI ---
   const addBet = async (betData: { game: string; market: string; odd: number; stake: number; }) => {
     if (!user) throw new Error("Utilizador não autenticado.");
 
@@ -59,6 +58,40 @@ export const useBets = () => {
     }
   };
 
-  // --- EXPORTAÇÃO ATUALIZADA ---
-  return { bets, loading, addBet };
+  // --- CORREÇÃO APLICADA AQUI ---
+  // Função para atualizar o status da aposta, usando 'anulada' em vez de 'void'
+  const updateBetStatus = async (bet: Bet, newResult: 'green' | 'red' | 'anulada') => {
+    if (!user || bet.result !== 'pending') {
+      throw new Error("Apenas apostas pendentes podem ser atualizadas.");
+    }
+
+    const betRef = doc(db, "bets", bet.id);
+    const userRef = doc(db, "users", user.uid);
+
+    let profit = 0;
+    let bankrollChange = 0;
+
+    if (newResult === 'green') {
+      profit = (bet.stake * bet.odd) - bet.stake;
+      bankrollChange = bet.stake * bet.odd;
+    } else if (newResult === 'red') {
+      profit = -bet.stake;
+      bankrollChange = 0;
+    } else if (newResult === 'anulada') { // Alterado de 'void' para 'anulada'
+      profit = 0;
+      bankrollChange = bet.stake;
+    }
+
+    try {
+      await runTransaction(db, async (transaction) => {
+        transaction.update(betRef, { result: newResult, profit: profit });
+        transaction.update(userRef, { currentBankroll: increment(bankrollChange) });
+      });
+    } catch (error) {
+      console.error("Erro na transação ao atualizar aposta:", error);
+      throw new Error("Erro ao atualizar aposta.");
+    }
+  };
+
+  return { bets, loading, addBet, updateBetStatus };
 };

@@ -1,3 +1,5 @@
+// Caminho: src/hooks/useAuth.ts
+
 import { useState, useEffect } from 'react';
 import { 
   User as FirebaseUser, 
@@ -8,9 +10,10 @@ import {
   signInWithPopup,
   sendEmailVerification,
   sendPasswordResetEmail,
-  confirmPasswordReset // Importa a função para confirmar a nova senha
+  confirmPasswordReset
 } from 'firebase/auth';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+// --- CORREÇÃO: Importar 'updateDoc' e 'increment' ---
+import { doc, setDoc, onSnapshot, updateDoc, increment, collection, addDoc, Timestamp } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../lib/firebase';
 import { User as AppUser } from '../types';
 
@@ -21,6 +24,7 @@ export const useAuth = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSubscriber, setIsSubscriber] = useState(false);
 
+  // ... (o seu useEffect existente permanece igual)
   useEffect(() => {
     let unsubscribeFromFirestore: (() => void) | null = null;
 
@@ -80,6 +84,33 @@ export const useAuth = () => {
     };
   }, []);
 
+  // --- NOVA FUNÇÃO ADICIONADA AQUI ---
+  const updateBankroll = async (amount: number, type: 'deposit' | 'withdrawal') => {
+    if (!user) throw new Error("Utilizador não autenticado.");
+
+    const userDocRef = doc(db, 'users', user.uid);
+    const amountToUpdate = type === 'deposit' ? amount : -amount;
+
+    // Garante que o saque não deixa a banca negativa
+    if (type === 'withdrawal' && user.currentBankroll < amount) {
+        throw new Error("O valor do saque não pode ser maior que a banca atual.");
+    }
+
+    // Atualiza o valor da banca do utilizador
+    await updateDoc(userDocRef, {
+        currentBankroll: increment(amountToUpdate)
+    });
+
+    // Regista a transação para o histórico
+    const transactionsCollectionRef = collection(db, 'bankrollTransactions');
+    await addDoc(transactionsCollectionRef, {
+        userId: user.uid,
+        type: type,
+        amount: amount,
+        createdAt: Timestamp.now()
+    });
+  };
+
   const login = (email: string, password: string) => {
     return signInWithEmailAndPassword(auth, email, password);
   };
@@ -102,7 +133,6 @@ export const useAuth = () => {
     return sendPasswordResetEmail(auth, email);
   };
 
-  // Nova função para confirmar a redefinição de senha
   const doConfirmPasswordReset = (code: string, newPassword: string) => {
     return confirmPasswordReset(auth, code, newPassword);
   };
@@ -118,6 +148,7 @@ export const useAuth = () => {
     loginWithGoogle, 
     logout, 
     sendPasswordReset, 
-    confirmPasswordReset: doConfirmPasswordReset // Exporta a nova função
+    confirmPasswordReset: doConfirmPasswordReset,
+    updateBankroll // <-- Exporta a nova função
   };
 };
