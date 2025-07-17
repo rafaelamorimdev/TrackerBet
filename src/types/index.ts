@@ -30,4 +30,8 @@ export interface User {
   photoURL: string | null;
   initialBankroll: number;
   currentBankroll: number;
+  customMarkets?: {
+    futebol: string[];
+    basquete: string[];
+}
 }

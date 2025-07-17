@@ -1,11 +1,10 @@
 // Caminho: src/components/AddBet.tsx
 
-import React, { useState } from 'react';
-import { Plus, Repeat } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Plus, Repeat, Check, X } from 'lucide-react';
 import { useBets } from '../hooks/useBets';
 import { useAuth } from '../hooks/useAuth';
 
-// Interface para os dados do formulário
 interface FormData {
   game: string;
   market: string;
@@ -14,48 +13,47 @@ interface FormData {
 }
 
 export const AddBet: React.FC = () => {
-  // --- CORREÇÃO: Obter a lista de apostas do hook ---
   const { addBet, bets } = useBets();
-  const { user } = useAuth();
-  const [activeSport, setActiveSport] = useState('futebol');
+  const { user, addCustomMarket } = useAuth(); // Obter a nova função
+  const [activeSport, setActiveSport] = useState<'futebol' | 'basquete'>('futebol');
   const [formData, setFormData] = useState<FormData>({ game: '', market: '', odd: '', stake: '' });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  
+  const [isAddingMarket, setIsAddingMarket] = useState(false);
+  const [newMarketName, setNewMarketName] = useState('');
+  const [addMarketLoading, setAddMarketLoading] = useState(false);
 
-  // --- LISTAS DE MERCADOS SEPARADAS POR DESPORTO ---
   const futebolMarketOptions = [
-    'Vencedor',
-    'Empate',
-    'Dupla Hipótese',
-    'Ambas as Equipas Marcam',
-    'Total de Golos (Mais/Menos)',
-    'Handicap Asiático',
-    'Total de Cantos (Mais/Menos)',
-    'Total de Cartões (Mais/Menos)',
-    'Finalizações (Mais/Menos)',
-    'Desarmes (Mais/Menos)',
-    'Bingo',
-    'Cartão Jogador',
-    'Gol Jogador',
-    'Passes',
+    'Vencedor', 'Empate', 'Dupla Hipótese', 'Ambas as Equipas Marcam', 
+    'Total de Golos (Mais/Menos)', 'Handicap Asiático', 'Total de Cantos (Mais/Menos)', 
+    'Total de Cartões (Mais/Menos)', 'Finalizações (Mais/Menos)', 'Desarmes (Mais/Menos)', 
+    'Bingo', 'Cartão Jogador', 'Gol Jogador', 'Passes'
   ];
-
   const basqueteMarketOptions = [
-    'Vencedor da Partida (Moneyline)',
-    'Handicap de Pontos',
-    'Total de Pontos (Mais/Menos)',
-    'Pontos do Jogador (Mais/Menos)',
-    'Assistências do Jogador (Mais/Menos)',
-    'Ressaltos do Jogador (Mais/Menos)',
+    'Vencedor da Partida (Moneyline)', 'Handicap de Pontos', 'Total de Pontos (Mais/Menos)', 
+    'Pontos do Jogador (Mais/Menos)', 'Assistências do Jogador (Mais/Menos)', 'Ressaltos do Jogador (Mais/Menos)'
   ];
+  
+  const marketOptions = useMemo(() => {
+    const defaultOptions = activeSport === 'futebol' ? futebolMarketOptions : basqueteMarketOptions;
+    const customOptions = user?.customMarkets?.[activeSport] || [];
+    return [...new Set([...defaultOptions, ...customOptions])];
+  }, [activeSport, user?.customMarkets]);
 
-  // Escolhe a lista de mercados com base no desporto ativo
-  const marketOptions = activeSport === 'futebol' ? futebolMarketOptions : basqueteMarketOptions;
-
-  // Função para lidar com as mudanças nos campos do formulário
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleSaveNewMarket = async () => {
+    if (!newMarketName.trim()) return;
+    setAddMarketLoading(true);
+    try {
+      await addCustomMarket(activeSport, newMarketName);
+      setNewMarketName('');
+      setIsAddingMarket(false);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao guardar mercado.';
+      setMessage({ type: 'error', text: errorMessage });
+    } finally {
+      setAddMarketLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,20 +77,18 @@ export const AddBet: React.FC = () => {
 
       await addBet(betData);
       setMessage({ type: 'success', text: 'Aposta adicionada com sucesso!' });
-      setFormData({ game: '', market: '', odd: '', stake: '' }); // Limpa o formulário
+      setFormData({ game: '', market: '', odd: '', stake: '' });
     } catch (error) {
+      // --- CORREÇÃO APLICADA AQUI ---
       const errorMessage = error instanceof Error ? error.message : 'Não foi possível adicionar a aposta.';
       setMessage({ type: 'error', text: errorMessage });
     } finally {
       setLoading(false);
     }
   };
-
-  // --- NOVA FUNÇÃO PARA REPETIR A ÚLTIMA APOSTA ---
+  
   const handleRepeatLastBet = () => {
-    // Verifica se existe alguma aposta no histórico
     if (bets && bets.length > 0) {
-      // A lista já vem ordenada da mais recente para a mais antiga do hook useBets
       const lastBet = bets[0];
       setFormData({
         game: lastBet.game,
@@ -106,6 +102,11 @@ export const AddBet: React.FC = () => {
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-card border border-card-border rounded-2xl p-8 shadow-lg">
@@ -116,7 +117,6 @@ export const AddBet: React.FC = () => {
             </div>
             <h1 className="text-2xl font-bold text-primary-text">Nova Aposta</h1>
           </div>
-          {/* --- BOTÃO AGORA FUNCIONAL --- */}
           <button onClick={handleRepeatLastBet} className="flex items-center text-sm text-secondary-text hover:text-primary-text transition-colors">
             <Repeat className="w-4 h-4 mr-2" />
             Repetir Última
@@ -135,28 +135,45 @@ export const AddBet: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-sm font-medium text-secondary-text mb-2 block">Jogo</label>
-            {/* --- CORREÇÃO APLICADA AQUI --- */}
-            <input 
-              name="game" 
-              value={formData.game} 
-              onChange={handleChange} 
-              type="text"  
-              placeholder={activeSport === 'futebol' ? "Ex: Real Madrid vs Juventus" : "Ex: Lakers vs Warriors"}
-              className="w-full bg-background border border-card-border rounded-lg py-3 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start" 
-            />
+            <input name="game" value={formData.game} onChange={handleChange} type="text" placeholder={activeSport === 'futebol' ? "Ex: Real Madrid vs Juventus" : "Ex: Lakers vs Warriors"} className="w-full bg-background border border-card-border rounded-lg py-3 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start" />
           </div>
+
           <div>
-            <label className="text-sm font-medium text-secondary-text mb-2 block">Mercado</label>
-            <select name="market" value={formData.market} onChange={handleChange} className="w-full bg-background border border-card-border rounded-lg py-3 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start">
-              <option value="">Selecione o mercado</option>
-            
-              {marketOptions.map(market => (
-                <option key={market} value={market}>
-                  {market}
-                </option>
-              ))}
-            </select>
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-sm font-medium text-secondary-text">Mercado</label>
+              {!isAddingMarket && (
+                <button type="button" onClick={() => setIsAddingMarket(true)} className="text-xs text-accent-start font-semibold hover:underline">
+                  + Adicionar Novo
+                </button>
+              )}
+            </div>
+
+            {isAddingMarket ? (
+              <div className="flex gap-2">
+                <input
+                  value={newMarketName}
+                  onChange={(e) => setNewMarketName(e.target.value)}
+                  type="text"
+                  placeholder="Nome do novo mercado"
+                  className="flex-grow bg-background border border-card-border rounded-lg py-3 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start"
+                />
+                <button type="button" onClick={handleSaveNewMarket} disabled={addMarketLoading} className="p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50">
+                  {addMarketLoading ? <div className="w-5 h-5 border-2 border-white/50 border-t-white rounded-full animate-spin"></div> : <Check className="w-5 h-5" />}
+                </button>
+                <button type="button" onClick={() => setIsAddingMarket(false)} className="p-3 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <select name="market" value={formData.market} onChange={handleChange} className="w-full bg-background border border-card-border rounded-lg py-3 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start">
+                <option value="">Selecione o mercado</option>
+                {marketOptions.map(market => (
+                  <option key={market} value={market}>{market}</option>
+                ))}
+              </select>
+            )}
           </div>
+          
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-secondary-text mb-2 block">Odd</label>

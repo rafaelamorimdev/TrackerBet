@@ -12,8 +12,8 @@ import {
   sendPasswordResetEmail,
   confirmPasswordReset
 } from 'firebase/auth';
-// --- CORREÇÃO: Importar 'updateDoc' e 'increment' ---
-import { doc, setDoc, onSnapshot, updateDoc, increment, collection, addDoc, Timestamp } from 'firebase/firestore';
+// --- CORREÇÃO: Importar 'runTransaction' ---
+import { doc, setDoc, onSnapshot, updateDoc, increment, collection, addDoc, Timestamp, runTransaction } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../lib/firebase';
 import { User as AppUser } from '../types';
 
@@ -24,7 +24,7 @@ export const useAuth = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSubscriber, setIsSubscriber] = useState(false);
 
-  // ... (o seu useEffect existente permanece igual)
+  // O seu useEffect existente, que está correto.
   useEffect(() => {
     let unsubscribeFromFirestore: (() => void) | null = null;
 
@@ -63,6 +63,8 @@ export const useAuth = () => {
               photoURL: firebaseUser.photoURL || null,
               initialBankroll: 0,
               currentBankroll: 0,
+              // Adiciona o campo de mercados personalizados para novos utilizadores
+              customMarkets: { futebol: [], basquete: [] }
             };
             setDoc(userDocRef, newUser).then(() => setUser(newUser));
           }
@@ -84,24 +86,21 @@ export const useAuth = () => {
     };
   }, []);
 
-  // --- NOVA FUNÇÃO ADICIONADA AQUI ---
+  // Sua função de updateBankroll existente
   const updateBankroll = async (amount: number, type: 'deposit' | 'withdrawal') => {
     if (!user) throw new Error("Utilizador não autenticado.");
 
     const userDocRef = doc(db, 'users', user.uid);
     const amountToUpdate = type === 'deposit' ? amount : -amount;
 
-    // Garante que o saque não deixa a banca negativa
     if (type === 'withdrawal' && user.currentBankroll < amount) {
         throw new Error("O valor do saque não pode ser maior que a banca atual.");
     }
 
-    // Atualiza o valor da banca do utilizador
     await updateDoc(userDocRef, {
         currentBankroll: increment(amountToUpdate)
     });
 
-    // Regista a transação para o histórico
     const transactionsCollectionRef = collection(db, 'bankrollTransactions');
     await addDoc(transactionsCollectionRef, {
         userId: user.uid,
@@ -109,6 +108,36 @@ export const useAuth = () => {
         amount: amount,
         createdAt: Timestamp.now()
     });
+  };
+
+  // --- NOVA FUNÇÃO PARA ADICIONAR UM MERCADO PERSONALIZADO ---
+  const addCustomMarket = async (sport: 'futebol' | 'basquete', marketName: string) => {
+    if (!user) throw new Error("Utilizador não autenticado.");
+    if (!marketName.trim()) throw new Error("O nome do mercado não pode estar vazio.");
+
+    const userDocRef = doc(db, 'users', user.uid);
+    const marketToAdd = marketName.trim();
+
+    try {
+      await runTransaction(db, async (transaction) => {
+        const userDoc = await transaction.get(userDocRef);
+        if (!userDoc.exists()) {
+          throw new Error("Documento do utilizador não encontrado.");
+        }
+
+        const data = userDoc.data();
+        const customMarkets = data.customMarkets || { futebol: [], basquete: [] };
+        
+        if (!customMarkets[sport].includes(marketToAdd)) {
+          customMarkets[sport].push(marketToAdd);
+        }
+
+        transaction.update(userDocRef, { customMarkets: customMarkets });
+      });
+    } catch (error) {
+      console.error("Erro ao adicionar mercado personalizado:", error);
+      throw new Error("Não foi possível guardar o novo mercado.");
+    }
   };
 
   const login = (email: string, password: string) => {
@@ -149,6 +178,7 @@ export const useAuth = () => {
     logout, 
     sendPasswordReset, 
     confirmPasswordReset: doConfirmPasswordReset,
-    updateBankroll // <-- Exporta a nova função
+    updateBankroll,
+    addCustomMarket // <-- Exporta a nova função
   };
 };

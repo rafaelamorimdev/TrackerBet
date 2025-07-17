@@ -22,7 +22,7 @@
         .cta-button {
             background: linear-gradient(90deg, #38BDF8, #818CF8);
             transition: all 0.3s ease;
-            cursor: pointer; /* Garante que o cursor seja uma mãozinha */
+            cursor: pointer;
         }
         .cta-button:hover {
             transform: translateY(-2px);
@@ -32,20 +32,16 @@
 </head>
 <body>
 
-    <!-- Cabeçalho -->
     <header class="absolute top-0 left-0 right-0 z-20 py-6 px-4 sm:px-6 lg:px-8">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold tracking-tight">Betly</h1>
-           
             <a href="/login" class="bg-gray-700/50 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-600/70 transition-colors">Acessar App</a>
         </div>
     </header>
 
-    <!-- Secção Principal (Hero) -->
     <main>
         <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-28 text-center overflow-hidden">
             <div class="absolute inset-0 bg-grid-gray-700/20 [mask-image:linear-gradient(to_bottom,white_20%,transparent_100%)]"></div>
-            {/* --- CORREÇÃO APLICADA AQUI: Adicionado 'relative z-10' para colocar o conteúdo à frente do fundo --- */}
             <div class="container mx-auto px-4 relative z-10">
                 <div class="max-w-4xl mx-auto">
                     <h1 class="text-4xl sm:text-5xl lg:text-7xl font-extrabold tracking-tighter mb-6">
@@ -54,21 +50,45 @@
                     <p class="text-lg lg:text-xl text-gray-400 max-w-2xl mx-auto mb-10">
                         Controle sua banca, analise seu desempenho e aumente seus lucros com a plataforma mais intuitiva do mercado.
                     </p>
-                    
                     <a href="/login" class="cta-button text-white font-bold text-lg px-10 py-4 rounded-xl inline-block">
                         Comece a Usar Agora
                     </a>
                     <p class="text-sm text-gray-500 mt-4">Junte-se a milhares de apostadores que já estão no controlo.</p>
                 </div>
-                <div class="mt-16">
-                    <div class="relative max-w-5xl mx-auto p-2 bg-gray-800/50 rounded-2xl shadow-2xl shadow-cyan-500/10">
-                        <img src="https://placehold.co/1200x675/111827/EAEAEA?text=Dashboard+da+Aplicação" alt="Dashboard da aplicação Betly" class="rounded-xl">
+                
+                <div id="image-carousel" class="mt-16 max-w-5xl mx-auto">
+                    <div class="relative p-2 bg-gray-800/50 rounded-2xl shadow-2xl shadow-cyan-500/10">
+                        <div class="overflow-hidden rounded-xl">
+                            <div id="carousel-inner" class="flex transition-transform duration-500 ease-in-out">
+                                <div class="w-full flex-shrink-0">
+                                    <img src="./" alt="Dashboard da Aplicação Betly" class="w-full h-full object-cover">
+                                </div>
+                                <div class="w-full flex-shrink-0">
+                                    <img src="./img/Dashboard.png" alt="Dashboard" class="w-full h-full object-cover">
+                                </div>
+                                <div class="w-full flex-shrink-0">
+                                    <img src="./img/Adicionar apostas.png" alt="adicionar apostas" class="w-full h-full object-cover">
+                                </div>
+                                <div class="w-full flex-shrink-0">
+                                    <img src="./img/Histórico de apostas.png" alt="Histórico de apostas" class="w-full h-full object-cover">
+                                </div>
+                                <div class="w-full flex-shrink-0">
+                                    <img src="./img/Banca.png" alt="Banca na casa de aposta" class="w-full h-full object-cover">
+                                </div>
+                            </div>
+                        </div>
+                        <button id="prev-btn" class="absolute top-1/2 left-4 -translate-y-1/2 bg-white/10 p-2 rounded-full text-white hover:bg-white/20 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                        </button>
+                        <button id="next-btn" class="absolute top-1/2 right-4 -translate-y-1/2 bg-white/10 p-2 rounded-full text-white hover:bg-white/20 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                        </button>
                     </div>
                 </div>
+
             </div>
         </section>
 
-        <!-- Secção de Funcionalidades -->
         <section id="features" class="py-20 sm:py-28">
             <div class="container mx-auto px-4">
                 <div class="text-center max-w-3xl mx-auto mb-16">
@@ -76,32 +96,26 @@
                     <p class="text-gray-400 text-lg">Deixe as planilhas complicadas para trás. O Betly oferece as ferramentas certas para elevar o seu nível.</p>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- Funcionalidade 1 -->
                     <div class="bg-gray-900/50 p-8 rounded-2xl border border-gray-800">
                         <h3 class="text-xl font-bold mb-3">Dashboard Inteligente</h3>
                         <p class="text-gray-400">Visualize as suas métricas mais importantes — ROI, Lucro, Taxa de Acerto — em tempo real.</p>
                     </div>
-                    <!-- Funcionalidade 2 -->
                     <div class="bg-gray-900/50 p-8 rounded-2xl border border-gray-800">
                         <h3 class="text-xl font-bold mb-3">Registro de Apostas</h3>
                         <p class="text-gray-400">Adicione as suas apostas em segundos, com uma interface limpa e otimizada.</p>
                     </div>
-                    <!-- Funcionalidade 3 -->
                     <div class="bg-gray-900/50 p-8 rounded-2xl border border-gray-800">
                         <h3 class="text-xl font-bold mb-3">Gestão de Banca</h3>
                         <p class="text-gray-400">Controle depósitos e levantamentos para saber exatamente o valor da sua banca a qualquer momento.</p>
                     </div>
-                    <!-- Funcionalidade 4 -->
                     <div class="bg-gray-900/50 p-8 rounded-2xl border border-gray-800">
                         <h3 class="text-xl font-bold mb-3">Análise de Desempenho</h3>
                         <p class="text-gray-400">Filtre as suas apostas e descubra em que desportos e mercados você é mais lucrativo.</p>
                     </div>
-                    <!-- Funcionalidade 5 -->
                     <div class="bg-gray-900/50 p-8 rounded-2xl border border-gray-800">
                         <h3 class="text-xl font-bold mb-3">Modo Claro & Escuro</h3>
                         <p class="text-gray-400">Use a aplicação da forma que preferir, ideal para analisar os seus dados a qualquer hora do dia.</p>
                     </div>
-                    <!-- Funcionalidade 6 -->
                     <div class="bg-gray-900/50 p-8 rounded-2xl border border-gray-800">
                         <h3 class="text-xl font-bold mb-3">Segurança Total</h3>
                         <p class="text-gray-400">Os seus dados são privados e seguros, guardados na nuvem com a tecnologia da Google.</p>
@@ -110,7 +124,6 @@
             </div>
         </section>
 
-        <!-- Secção de Preços -->
         <section id="pricing" class="py-20 sm:py-28 bg-gray-900/50">
             <div class="container mx-auto px-4">
                 <div class="text-center max-w-3xl mx-auto mb-16">
@@ -118,7 +131,6 @@
                     <p class="text-gray-400 text-lg">Comece gratuitamente ou desbloqueie todo o poder do Betly com o nosso plano Premium.</p>
                 </div>
                 <div class="flex flex-col lg:flex-row justify-center items-center gap-8">
-                    <!-- Plano Premium -->
                     <div class="w-full max-w-md bg-gray-900 border-2 border-cyan-500 rounded-2xl p-8 shadow-2xl shadow-cyan-500/10">
                         <h3 class="text-2xl font-bold text-center mb-2">Premium</h3>
                         <p class="text-gray-400 text-center mb-6">Acesso ilimitado a todas as funcionalidades.</p>
@@ -131,7 +143,6 @@
                             <li class="flex items-center"><span class="text-cyan-500 mr-3">✔</span>Relatórios avançados</li>
                             <li class="flex items-center"><span class="text-cyan-500 mr-3">✔</span>Suporte prioritário</li>
                         </ul>
-                        
                         <a href="/login" class="cta-button w-full text-center text-white font-bold py-4 rounded-xl inline-block">
                             Assinar Plano Premium
                         </a>
@@ -140,7 +151,6 @@
             </div>
         </section>
 
-        <!-- Secção de FAQ -->
         <section id="faq" class="py-20 sm:py-28">
             <div class="container mx-auto px-4 max-w-4xl">
                 <div class="text-center mb-16">
@@ -164,12 +174,43 @@
         </section>
     </main>
 
-    <!-- Rodapé -->
     <footer class="py-10 border-t border-gray-800">
         <div class="container mx-auto px-4 text-center text-gray-500">
             <p>&copy; 2025 Betly. Todos os direitos reservados.</p>
         </div>
     </footer>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const carouselInner = document.getElementById('carousel-inner');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            
+            const totalSlides = 4;
+            let currentSlide = 0;
+
+            function updateCarousel() {
+                if (carouselInner) {
+                    carouselInner.style.transform = `translateX(-${currentSlide * 100}%)`;
+                }
+            }
+
+            if (nextBtn && prevBtn) {
+                nextBtn.addEventListener('click', () => {
+                    currentSlide = (currentSlide + 1) % totalSlides;
+                    updateCarousel();
+                });
+
+                prevBtn.addEventListener('click', () => {
+                    currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+                    updateCarousel();
+                });
+
+                setInterval(() => {
+                    nextBtn.click();
+                }, 5000);
+            }
+        });
+    </script>
 </body>
 </html>
