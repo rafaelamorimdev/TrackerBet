@@ -1,17 +1,17 @@
 // Caminho: src/components/PricingPage.tsx
 
 import React, { useState } from 'react';
-import { Star, AlertCircle } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth'; // No seu projeto real, importe o seu hook
+import { Star, AlertCircle, User as UserIcon, Phone, X } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 import { User } from '../types';
 
 // --- Interfaces ---
 interface Plan {
   id: string;
   name: string;
-  priceId: string; // ID do preço no seu sistema de pagamentos (ex: Stripe, Abacate Pay)
-  price: number; // Valor total da cobrança (ex: 66.00 para o trimestral)
-  duration: string; // Texto da duração (ex: '/trimestre')
+  priceId: string;
+  price: number;
+  duration: string;
   isPopular?: boolean;
   discountInfo?: string;
 }
@@ -71,7 +71,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, user, onClose, onCo
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-primary-text">Confirmar Compra</h2>
-            <button onClick={onClose} className="text-secondary-text hover:text-primary-text">&times;</button>
+            <button onClick={onClose} className="text-secondary-text hover:text-primary-text"><X className="w-6 h-6" /></button>
           </div>
           <div className="space-y-2 text-secondary-text">
             <div className="flex justify-between items-center bg-white/5 p-3 rounded-lg"><span className="font-medium">Plano:</span><span className="font-bold text-accent-start">{plan.name}</span></div>
@@ -83,11 +83,11 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, user, onClose, onCo
             {(modalError || error) && <p className="text-sm text-red-400 bg-red-900/30 p-3 rounded-lg text-center">{modalError || error}</p>}
             <div>
               <label htmlFor="taxId" className="block text-sm font-medium text-secondary-text mb-1">CPF</label>
-              <input type="text" id="taxId" value={taxId} onChange={handleTaxIdChange} placeholder="000.000.000-00" className="w-full pl-4 pr-4 py-3 bg-background border border-card-border rounded-lg focus:ring-2 focus:ring-accent-start text-primary-text"/>
+              <div className="relative"><UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="taxId" value={taxId} onChange={handleTaxIdChange} placeholder="000.000.000-00" className="w-full pl-10 pr-4 py-3 bg-background border border-card-border rounded-lg focus:ring-2 focus:ring-accent-start text-primary-text"/></div>
             </div>
             <div>
               <label htmlFor="cellphone" className="block text-sm font-medium text-secondary-text mb-1">Telemóvel (com DDD)</label>
-              <input type="text" id="cellphone" value={cellphone} onChange={handleCellphoneChange} placeholder="(00) 90000-0000" className="w-full pl-4 pr-4 py-3 bg-background border border-card-border rounded-lg focus:ring-2 focus:ring-accent-start text-primary-text"/>
+              <div className="relative"><Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /><input type="text" id="cellphone" value={cellphone} onChange={handleCellphoneChange} placeholder="(00) 90000-0000" className="w-full pl-10 pr-4 py-3 bg-background border border-card-border rounded-lg focus:ring-2 focus:ring-accent-start text-primary-text"/></div>
             </div>
           </div>
           <div className="mt-8 flex flex-col sm:flex-row-reverse gap-3">
@@ -115,7 +115,6 @@ export const PricingPage: React.FC = () => {
     { id: 'annual', name: 'Anual', priceId: 'price_anual_id', price: 216.00, duration: '/ano', discountInfo: `Poupe 40%` },
   ];
 
-  // --- LÓGICA DE CHECKOUT ATUALIZADA ---
   const handleSubscription = async (data: { taxId: string; cellphone: string }) => {
     if (!user || !selectedPlan) {
       setError("Ocorreu um erro. Por favor, tente novamente.");
@@ -126,29 +125,23 @@ export const PricingPage: React.FC = () => {
     setError(null);
 
     try {
-      // A sua API deve estar na pasta /api/create-checkout.ts
       const response = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          // --- CORREÇÃO APLICADA AQUI ---
-          // Enviando o objeto completo do plano, como a sua API parece esperar
           plan: selectedPlan,
           user: { 
             uid: user.uid, 
             email: user.email, 
             displayName: user.displayName, 
-            taxId: data.taxId.replace(/\D/g, ''), // Envia apenas os números
-            cellphone: data.cellphone.replace(/\D/g, '') // Envia apenas os números
+            taxId: data.taxId.replace(/\D/g, ''),
+            cellphone: data.cellphone.replace(/\D/g, '')
           },
         }),
       });
 
       const result = await response.json();
-      if (!response.ok) {
-        // Mostra a mensagem de erro específica vinda da API
-        throw new Error(result.error || 'Falha ao comunicar com o servidor.');
-      }
+      if (!response.ok) throw new Error(result.error || 'Falha ao comunicar com o servidor.');
       
       if (result.checkoutUrl) {
         window.location.href = result.checkoutUrl;
@@ -157,7 +150,8 @@ export const PricingPage: React.FC = () => {
       }
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível iniciar o processo de pagamento.");
+      const errorMessage = err instanceof Error ? err.message : "Não foi possível iniciar o processo de pagamento.";
+      setError(errorMessage);
       setLoadingPlan(null);
       setSelectedPlan(null);
     }
