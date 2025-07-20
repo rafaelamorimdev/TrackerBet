@@ -1,90 +1,96 @@
-import React from 'react';
-import { TrendingUp, CheckCircle, XCircle, Clock, DollarSign, Target } from 'lucide-react';
+// Caminho: src/components/Dashboard.tsx
+
+import React, { useMemo } from 'react';
 import { useBets } from '../hooks/useBets';
 import { useAuth } from '../hooks/useAuth';
+import { Bet } from '../types'; // Importa o tipo Bet
+
+// Um componente de exemplo para um card de estatísticas
+const StatCard: React.FC<{ title: string; value: string; colorClass: string }> = ({ title, value, colorClass }) => (
+  <div className="bg-card border border-card-border rounded-xl p-6">
+    <p className="text-sm text-secondary-text mb-2">{title}</p>
+    <p className={`text-3xl font-bold ${colorClass}`}>{value}</p>
+  </div>
+);
 
 export const Dashboard: React.FC = () => {
-  const { user, isAdmin, loading: authLoading } = useAuth(); 
-  const { bets, loading: betsLoading } = useBets();
+  // --- CORREÇÃO 1: Usar 'historyItems' em vez de 'bets' ---
+  const { historyItems, loading } = useBets();
+  const { user } = useAuth();
 
-  if (authLoading || betsLoading) {
-    return <div className="text-center text-gray-500 dark:text-secondary-text">A carregar dados do dashboard...</div>;
+  // --- CORREÇÃO 2: Usar 'useMemo' para calcular as estatísticas de forma segura ---
+  const stats = useMemo(() => {
+    if (!historyItems) {
+      // Retorna valores padrão enquanto os dados carregam para evitar erros
+      return {
+        totalProfit: 0,
+        totalStaked: 0,
+        winRate: 0,
+        betCount: 0,
+      };
+    }
+
+    // Filtra para obter apenas os itens que são apostas
+    const betsOnly = historyItems.filter((item): item is Bet => item.type === 'bet');
+    
+    // Filtra para obter apenas as apostas que já foram resolvidas (não estão pendentes)
+    const settledBets = betsOnly.filter(bet => bet.result !== 'pending');
+
+    // Calcula o lucro total a partir de todas as apostas
+    const totalProfit = betsOnly.reduce((acc, bet) => acc + bet.profit, 0);
+    
+    // Calcula o total apostado
+    const totalStaked = betsOnly.reduce((acc, bet) => acc + bet.stake, 0);
+
+    // Calcula a taxa de vitórias (win rate)
+    const wins = settledBets.filter(bet => bet.result === 'green').length;
+    const winRate = settledBets.length > 0 ? (wins / settledBets.length) * 100 : 0;
+
+    return {
+      totalProfit,
+      totalStaked,
+      winRate,
+      betCount: betsOnly.length,
+    };
+  }, [historyItems]); // Recalcula apenas quando o histórico mudar
+
+  if (loading) {
+    return <div className="text-center p-10">A carregar dados do dashboard...</div>;
   }
-  
-  const totalProfit = bets.reduce((acc, bet) => acc + bet.profit, 0);
-  const totalStaked = bets.reduce((acc, bet) => acc + bet.stake, 0);
-  const roi = totalStaked > 0 ? (totalProfit / totalStaked) * 100 : 0;
-  
-  const greenBets = bets.filter(bet => bet.result === 'green').length;
-  const redBets = bets.filter(bet => bet.result === 'red').length;
-  const pendingBets = bets.filter(bet => bet.result === 'pending').length;
-  const hitRate = bets.length > 0 ? (greenBets / (greenBets + redBets)) * 100 : 0;
 
-  const stats = [
-    { title: 'Banca Atual', value: `R$ ${user?.currentBankroll.toFixed(2)}`, icon: DollarSign, color: 'text-blue-500 dark:text-blue-400' },
-    { title: 'Lucro Total', value: `R$ ${totalProfit.toFixed(2)}`, icon: TrendingUp, color: totalProfit >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400' },
-    { title: 'ROI', value: `${roi.toFixed(1)}%`, icon: Target, color: roi >= 0 ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400' },
-    { title: 'Taxa de Acerto', value: `${hitRate.toFixed(1)}%`, icon: CheckCircle, color: 'text-yellow-500 dark:text-yellow-400' },
-  ];
-  
   return (
-    <div className="space-y-6">
-      {/* CORREÇÃO: Cor do título ajustada para ambos os modos */}
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-      
-      {isAdmin && (
-        <div className="p-4 mb-4 text-sm text-cyan-800 dark:text-cyan-300 bg-cyan-100 dark:bg-cyan-900/50 rounded-lg" role="alert">
-          <span className="font-medium">Modo Administrador:</span> Você está logado como administrador.
-        </div>
-      )}
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map(stat => (
-          // CORREÇÃO: Estilos de fundo, borda e texto dos cartões ajustados
-          <div key={stat.title} className="bg-white dark:bg-card p-6 rounded-xl border border-gray-200 dark:border-card-border">
-            <div className="flex items-center">
-              <div className={`p-3 rounded-full bg-gray-100 dark:bg-white/5`}>
-                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-500 dark:text-secondary-text">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-primary-text">{stat.value}</p>
-              </div>
-            </div>
-          </div>
-        ))}
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-foreground">
+          Bem-vindo, {user?.displayName || user?.email}!
+        </h1>
+        <p className="text-secondary-text mt-2">Aqui está um resumo da sua atividade.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* CORREÇÃO: Estilos de fundo, borda e texto dos cartões ajustados */}
-        <div className="lg:col-span-1 bg-white dark:bg-card p-6 rounded-xl border border-gray-200 dark:border-card-border">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-primary-text mb-4">Resumo das Apostas</h2>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center text-gray-700 dark:text-secondary-text"><div className="flex items-center"><CheckCircle className="w-5 h-5 text-green-500 mr-2" />Green</div><p className="font-medium text-gray-900 dark:text-primary-text">{greenBets}</p></div>
-            <div className="flex justify-between items-center text-gray-700 dark:text-secondary-text"><div className="flex items-center"><XCircle className="w-5 h-5 text-red-500 mr-2" />Red</div><p className="font-medium text-gray-900 dark:text-primary-text">{redBets}</p></div>
-            <div className="flex justify-between items-center text-gray-700 dark:text-secondary-text"><div className="flex items-center"><Clock className="w-5 h-5 text-yellow-500 mr-2" />Pendentes</div><p className="font-medium text-gray-900 dark:text-primary-text">{pendingBets}</p></div>
-          </div>
-        </div>
-        
-        {/* CORREÇÃO: Estilos de fundo, borda e texto dos cartões ajustados */}
-        <div className="lg:col-span-2 bg-white dark:bg-card p-6 rounded-xl border border-gray-200 dark:border-card-border">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-primary-text mb-4">Últimas Atividades</h2>
-          <div className="space-y-3">
-            {bets.slice(0, 5).map(bet => (
-              <div key={bet.id} className="flex justify-between items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5">
-                <div>
-                  <p className="font-medium text-gray-800 dark:text-gray-200">{bet.game}</p>
-                  <p className="text-sm text-gray-500 dark:text-secondary-text">{bet.market} @ {bet.odd.toFixed(2)}</p>
-                </div>
-                <div className={`text-right ${bet.result === 'green' ? 'text-green-500 dark:text-green-400' : bet.result === 'red' ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-secondary-text'}`}>
-                  <p className="font-semibold">{bet.result === 'pending' ? `R$ ${bet.stake.toFixed(2)}` : `R$ ${bet.profit.toFixed(2)}`}</p>
-                  <p className="text-xs capitalize">{bet.result}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard 
+          title="Banca Atual" 
+          value={`R$ ${user?.currentBankroll.toFixed(2)}`}
+          colorClass="text-primary-text"
+        />
+        <StatCard 
+          title="Lucro Total" 
+          value={`R$ ${stats.totalProfit.toFixed(2)}`}
+          colorClass={stats.totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}
+        />
+        <StatCard 
+          title="Total de Apostas" 
+          value={String(stats.betCount)}
+          colorClass="text-primary-text"
+        />
+        <StatCard 
+          title="Taxa de Acerto" 
+          value={`${stats.winRate.toFixed(1)}%`}
+          colorClass="text-cyan-400"
+        />
       </div>
+
+      {/* Pode adicionar gráficos ou outras visualizações aqui */}
     </div>
   );
 };
