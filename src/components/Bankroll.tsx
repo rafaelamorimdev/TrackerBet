@@ -1,4 +1,4 @@
-// Caminho: src/components/Bankroll.tsx
+
 
 import React, { useState } from 'react';
 import { DollarSign, ArrowUpRight, Plus, Minus } from 'lucide-react';
@@ -11,7 +11,7 @@ export const Bankroll: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-  // Simulação de dados para o exemplo
+  
   const initialBankroll = user?.initialBankroll || 0;
   const growth = initialBankroll > 0 ? ((user?.currentBankroll || 0) - initialBankroll) / initialBankroll * 100 : 0;
 
@@ -30,9 +30,9 @@ export const Bankroll: React.FC = () => {
     try {
       await updateBankroll(numericAmount, activeTab);
       setMessage({ type: 'success', text: `${activeTab === 'deposit' ? 'Depósito' : 'Saque'} realizado com sucesso!` });
-      setAmount(''); // Limpa o campo após o sucesso
+      setAmount(''); 
     } catch (error) {
-      // --- CORREÇÃO APLICADA AQUI ---
+      
       const errorMessage = error instanceof Error ? error.message : 'Ocorreu um erro ao processar a transação.';
       setMessage({ type: 'error', text: errorMessage });
     } finally {

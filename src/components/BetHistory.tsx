@@ -1,12 +1,11 @@
-// Caminho: src/components/BetHistory.tsx
+
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, CheckCircle, XCircle, RefreshCw, Edit, Trash2, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { useBets } from '../hooks/useBets';
-// --- CORREÇÃO: 'HistoryItem' removido pois não é usado diretamente aqui ---
-import { Bet } from '../types';
+import { Bet } from '../types'; 
 
-// O componente EditBetModal permanece o mesmo
+
 const EditBetModal: React.FC<{
   bet: Bet | null;
   isOpen: boolean;
@@ -80,6 +79,7 @@ export const BetHistory: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [betToEdit, setBetToEdit] = useState<Bet | null>(null);
 
@@ -117,64 +117,88 @@ export const BetHistory: React.FC = () => {
   };
 
   const filteredItems = useMemo(() => {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(now.getDate() - 7);
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(now.getDate() - 30);
+
     return historyItems.filter(item => {
+      let dateMatch = true;
+      if (dateFilter === '7days') {
+        dateMatch = item.createdAt >= sevenDaysAgo;
+      } else if (dateFilter === '30days') {
+        dateMatch = item.createdAt >= thirtyDaysAgo;
+      }
+      if (!dateMatch) return false;
+
       if (item.type !== 'bet') return true;
+      
       const searchMatch = item.game.toLowerCase().includes(searchTerm.toLowerCase());
       const statusMatch = statusFilter === 'all' || item.result === statusFilter;
       return searchMatch && statusMatch;
     });
-  }, [historyItems, searchTerm, statusFilter]);
+  }, [historyItems, searchTerm, statusFilter, dateFilter]);
 
   const totalProfit = useMemo(() => {
-    return historyItems
+    return filteredItems
       .filter((item): item is Bet => item.type === 'bet')
       .reduce((acc, bet) => acc + bet.profit, 0);
-  }, [historyItems]);
+  }, [filteredItems]);
 
   return (
     <>
       <EditBetModal bet={betToEdit} isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onSave={updateBet} />
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-foreground">Histórico de Apostas</h1>
-            <div className="bg-card border border-card-border rounded-lg px-4 py-2 text-sm">
-                <span className="text-secondary-text mr-2">Lucro do Período:</span>
-                <span className={`font-bold ${totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    R$ {totalProfit.toFixed(2)}
-                </span>
-            </div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-foreground">Histórico de Apostas</h1>
+          <div className="bg-card border border-card-border rounded-lg px-4 py-2 text-sm">
+            <span className="text-secondary-text mr-2">Lucro do Período:</span>
+            <span className={`font-bold ${totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              R$ {totalProfit.toFixed(2)}
+            </span>
+          </div>
         </div>
 
         {error && (
-            <div className="bg-red-900/50 text-red-400 p-3 rounded-lg text-center text-sm">
-                {error}
-            </div>
+          <div className="bg-red-900/50 text-red-400 p-3 rounded-lg text-center text-sm">
+            {error}
+          </div>
         )}
 
         <div className="bg-card border border-card-border rounded-xl p-4 flex flex-col md:flex-row gap-4">
-            <div className="relative flex-grow">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-text" />
-                <input
-                    type="text"
-                    placeholder="Buscar por jogo..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-background border border-card-border rounded-lg py-2.5 pl-10 pr-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start"
-                />
-            </div>
-            <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full md:w-48 bg-background border border-card-border rounded-lg py-2.5 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start"
-            >
-                <option value="all">Todos os Status</option>
-                <option value="pending">Pendentes</option>
-                <option value="green">Green</option>
-                <option value="red">Red</option>
-                <option value="reembolso">Reembolso</option>
-            </select>
+          <div className="relative flex-grow">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-text" />
+            <input
+              type="text"
+              placeholder="Buscar por jogo..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full bg-background border border-card-border rounded-lg py-2.5 pl-10 pr-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full md:w-48 bg-background border border-card-border rounded-lg py-2.5 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start"
+          >
+            <option value="all">Todos os Status</option>
+            <option value="pending">Pendentes</option>
+            <option value="green">Green</option>
+            <option value="red">Red</option>
+            <option value="reembolso">Reembolso</option>
+          </select>
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="w-full md:w-48 bg-background border border-card-border rounded-lg py-2.5 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start"
+          >
+            <option value="all">Todo o Período</option>
+            <option value="7days">Últimos 7 Dias</option>
+            <option value="30days">Últimos 30 Dias</option>
+          </select>
         </div>
-        
+
         <div className="bg-card border border-card-border rounded-xl overflow-x-auto">
           <table className="min-w-full">
             <thead className="bg-white/5">
