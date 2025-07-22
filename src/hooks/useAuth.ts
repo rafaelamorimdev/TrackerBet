@@ -12,6 +12,7 @@ import {
   sendPasswordResetEmail,
   confirmPasswordReset
 } from 'firebase/auth';
+// --- CORREÇÃO: 'setDoc' removido pois não estava a ser usado ---
 import { doc, onSnapshot, Timestamp, getDoc, writeBatch, runTransaction, updateDoc, increment, collection, addDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../lib/firebase';
 import { User } from '../types';
@@ -26,7 +27,7 @@ export const useAuth = () => {
   useEffect(() => {
     let unsubscribeFromFirestore: (() => void) | null = null;
 
-    const unsubscribeFromAuth = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+    const unsubscribeFromAuth = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
       if (unsubscribeFromFirestore) unsubscribeFromFirestore();
 
       if (!firebaseUser) {
@@ -39,66 +40,61 @@ export const useAuth = () => {
 
       const userDocRef = doc(db, 'users', firebaseUser.uid);
 
-      // --- LÓGICA DE CRIAÇÃO E LEITURA REESTRUTURADA PARA MAIOR ROBUSTEZ ---
-      try {
-        const docSnapshot = await getDoc(userDocRef);
+      // --- LÓGICA REESTRUTURADA PARA MAIOR ROBUSTEZ ---
+      // onSnapshot é a única fonte de verdade para o estado do utilizador.
+      unsubscribeFromFirestore = onSnapshot(userDocRef, async (docSnapshot) => {
+        if (docSnapshot.exists()) {
+          // Utilizador existente: lê os dados, define o estado e termina o carregamento.
+          const userData = docSnapshot.data();
+          setIsAdmin(userData.role === 'admin');
+          const accessUntil = userData.accessUntil as Timestamp | undefined;
+          const hasActiveTrial = accessUntil ? accessUntil.toMillis() > Date.now() : false;
+          setIsSubscriber(hasActiveTrial);
+          setUser({ uid: firebaseUser.uid, ...userData } as User);
+          setLoading(false); // Carregamento termina aqui, após o estado ser definido.
+        } else {
+          // Novo utilizador: cria o documento. O onSnapshot irá disparar novamente com os novos dados.
+          try {
+            const newUserEmail = firebaseUser.email!;
+            const preAuthRef = doc(db, 'preAuthorizedUsers', newUserEmail);
+            let accessUntil: Timestamp | undefined = undefined;
 
-        if (!docSnapshot.exists()) {
-          // É um novo utilizador, vamos criá-lo
-          const newUserEmail = firebaseUser.email!;
-          const preAuthRef = doc(db, 'preAuthorizedUsers', newUserEmail);
-          let accessUntil: Timestamp | undefined = undefined;
+            const preAuthSnap = await getDoc(preAuthRef);
+            if (preAuthSnap.exists()) {
+              accessUntil = preAuthSnap.data().accessUntil as Timestamp;
+            }
 
-          const preAuthSnap = await getDoc(preAuthRef);
-          if (preAuthSnap.exists()) {
-            accessUntil = preAuthSnap.data().accessUntil as Timestamp;
+            const newUser: User = {
+                uid: firebaseUser.uid,
+                email: newUserEmail,
+                displayName: firebaseUser.displayName || null,
+                photoURL: firebaseUser.photoURL || null,
+                initialBankroll: 0,
+                currentBankroll: 0,
+                isSubscriber: !!accessUntil,
+                accessUntil: accessUntil,
+                createdAt: Timestamp.now(),
+                customMarkets: { futebol: [], basquete: [] }
+            };
+
+            const batch = writeBatch(db);
+            batch.set(userDocRef, newUser);
+            if (accessUntil) {
+                batch.delete(preAuthRef);
+            }
+            await batch.commit();
+            // Não é preciso definir o estado aqui. O listener onSnapshot fará isso automaticamente.
+          } catch (err) {
+            console.error("Erro ao criar novo utilizador:", err);
+            setError("Não foi possível criar o perfil do utilizador.");
+            setLoading(false); // Termina o carregamento em caso de erro.
           }
-
-          const newUser: User = {
-              uid: firebaseUser.uid,
-              email: newUserEmail,
-              displayName: firebaseUser.displayName || null,
-              photoURL: firebaseUser.photoURL || null,
-              initialBankroll: 0,
-              currentBankroll: 0,
-              isSubscriber: !!accessUntil,
-              accessUntil: accessUntil,
-              createdAt: Timestamp.now(),
-              customMarkets: { futebol: [], basquete: [] }
-          };
-
-          const batch = writeBatch(db);
-          batch.set(userDocRef, newUser);
-          if (accessUntil) {
-              batch.delete(preAuthRef);
-          }
-          await batch.commit();
-          
-          // Define o estado manualmente após a criação
-          setUser(newUser);
-          setIsAdmin(newUser.role === 'admin');
-          setIsSubscriber(newUser.isSubscriber);
-
         }
-        
-        // Para utilizadores novos e existentes, estabelece o listener em tempo real
-        unsubscribeFromFirestore = onSnapshot(userDocRef, (snapshot) => {
-          if (snapshot.exists()) {
-            const userData = snapshot.data();
-            setIsAdmin(userData.role === 'admin');
-            const accessUntil = userData.accessUntil as Timestamp | undefined;
-            const hasActiveTrial = accessUntil ? accessUntil.toMillis() > Date.now() : false;
-            setIsSubscriber(hasActiveTrial);
-            setUser({ uid: firebaseUser.uid, ...userData } as User);
-          }
-        });
-
-      } catch (err) {
-        console.error("Erro no processo de autenticação:", err);
+      }, (err) => {
+        console.error("Erro no listener do onSnapshot:", err);
         setError("Não foi possível carregar os dados do usuário.");
-      } finally {
-        setLoading(false); // Garante que o loading termina em todos os casos
-      }
+        setLoading(false); // Termina o carregamento em caso de erro no listener.
+      });
     });
 
     return () => unsubscribeFromAuth();
