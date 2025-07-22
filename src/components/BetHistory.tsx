@@ -1,10 +1,9 @@
-
+// Caminho: src/components/BetHistory.tsx
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, CheckCircle, XCircle, RefreshCw, Edit, Trash2, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { useBets } from '../hooks/useBets';
 import { Bet } from '../types'; 
-
 
 const EditBetModal: React.FC<{
   bet: Bet | null;
@@ -40,25 +39,26 @@ const EditBetModal: React.FC<{
 
     return (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-            <div className="bg-card border border-card-border rounded-xl p-6 w-full max-w-md space-y-4 animate-fade-in">
-                <h2 className="text-xl font-bold text-primary-text">Editar Aposta</h2>
+            {/* --- CORREÇÃO DE ESTILO: Adicionadas classes para modo claro --- */}
+            <div className="bg-white dark:bg-card border border-gray-200 dark:border-card-border rounded-xl p-6 w-full max-w-md space-y-4 animate-fade-in shadow-lg">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-primary-text">Editar Aposta</h2>
                 <div>
-                    <label className="text-sm text-secondary-text mb-1 block">Jogo</label>
-                    <input type="text" value={editedGame} onChange={(e) => setEditedGame(e.target.value)} className="w-full mt-1 bg-background border border-card-border rounded-lg p-2 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start" />
+                    <label className="text-sm text-gray-600 dark:text-secondary-text mb-1 block">Jogo</label>
+                    <input type="text" value={editedGame} onChange={(e) => setEditedGame(e.target.value)} className="w-full mt-1 bg-gray-50 dark:bg-background border border-gray-300 dark:border-card-border rounded-lg p-2 text-gray-900 dark:text-primary-text focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-accent-start" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="text-sm text-secondary-text mb-1 block">Odd</label>
-                        <input type="number" value={editedOdd} onChange={(e) => setEditedOdd(parseFloat(e.target.value) || 0)} className="w-full mt-1 bg-background border border-card-border rounded-lg p-2 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start" />
+                        <label className="text-sm text-gray-600 dark:text-secondary-text mb-1 block">Odd</label>
+                        <input type="number" value={editedOdd} onChange={(e) => setEditedOdd(parseFloat(e.target.value) || 0)} className="w-full mt-1 bg-gray-50 dark:bg-background border border-gray-300 dark:border-card-border rounded-lg p-2 text-gray-900 dark:text-primary-text focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-accent-start" />
                     </div>
                     <div>
-                        <label className="text-sm text-secondary-text mb-1 block">Stake</label>
-                        <input type="number" value={editedStake} onChange={(e) => setEditedStake(parseFloat(e.target.value) || 0)} className="w-full mt-1 bg-background border border-card-border rounded-lg p-2 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start" />
+                        <label className="text-sm text-gray-600 dark:text-secondary-text mb-1 block">Stake</label>
+                        <input type="number" value={editedStake} onChange={(e) => setEditedStake(parseFloat(e.target.value) || 0)} className="w-full mt-1 bg-gray-50 dark:bg-background border border-gray-300 dark:border-card-border rounded-lg p-2 text-gray-900 dark:text-primary-text focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-accent-start" />
                     </div>
                 </div>
                 <div>
-                    <label className="text-sm text-secondary-text mb-1 block">Status / Resultado</label>
-                    <select value={editedResult} onChange={(e) => setEditedResult(e.target.value as Bet['result'])} className="w-full mt-1 bg-background border border-card-border rounded-lg p-2 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start">
+                    <label className="text-sm text-gray-600 dark:text-secondary-text mb-1 block">Status / Resultado</label>
+                    <select value={editedResult} onChange={(e) => setEditedResult(e.target.value as Bet['result'])} className="w-full mt-1 bg-gray-50 dark:bg-background border border-gray-300 dark:border-card-border rounded-lg p-2 text-gray-900 dark:text-primary-text focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-accent-start">
                         <option value="pending">Pendente</option>
                         <option value="green">Green</option>
                         <option value="red">Red</option>
@@ -66,8 +66,8 @@ const EditBetModal: React.FC<{
                     </select>
                 </div>
                 <div className="flex justify-end gap-4 pt-4">
-                    <button onClick={onClose} className="px-4 py-2 rounded-lg text-secondary-text hover:bg-white/10 transition-colors">Cancelar</button>
-                    <button onClick={handleSave} className="px-6 py-2 rounded-lg bg-accent-start text-white font-semibold hover:opacity-90 transition-opacity">Salvar Alterações</button>
+                    <button onClick={onClose} className="px-4 py-2 rounded-lg text-gray-600 dark:text-secondary-text hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">Cancelar</button>
+                    <button onClick={handleSave} className="px-6 py-2 rounded-lg bg-blue-600 dark:bg-accent-start text-white font-semibold hover:opacity-90 transition-opacity">Salvar Alterações</button>
                 </div>
             </div>
         </div>
@@ -152,35 +152,37 @@ export const BetHistory: React.FC = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-foreground">Histórico de Apostas</h1>
-          <div className="bg-card border border-card-border rounded-lg px-4 py-2 text-sm">
-            <span className="text-secondary-text mr-2">Lucro do Período:</span>
-            <span className={`font-bold ${totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+          {/* --- CORREÇÃO DE ESTILO: Adicionadas classes para modo claro --- */}
+          <div className="bg-white dark:bg-card border border-gray-200 dark:border-card-border rounded-lg px-4 py-2 text-sm shadow-sm">
+            <span className="text-gray-600 dark:text-secondary-text mr-2">Lucro do Período:</span>
+            <span className={`font-bold ${totalProfit >= 0 ? 'text-green-500' : 'text-red-500'}`}>
               R$ {totalProfit.toFixed(2)}
             </span>
           </div>
         </div>
 
         {error && (
-          <div className="bg-red-900/50 text-red-400 p-3 rounded-lg text-center text-sm">
+          <div className="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-400 p-3 rounded-lg text-center text-sm">
             {error}
           </div>
         )}
 
-        <div className="bg-card border border-card-border rounded-xl p-4 flex flex-col md:flex-row gap-4">
+        {/* --- CORREÇÃO DE ESTILO: Adicionadas classes para modo claro --- */}
+        <div className="bg-white dark:bg-card border border-gray-200 dark:border-card-border rounded-xl p-4 flex flex-col md:flex-row gap-4 shadow-sm">
           <div className="relative flex-grow">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-text" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-secondary-text" />
             <input
               type="text"
               placeholder="Buscar por jogo..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-background border border-card-border rounded-lg py-2.5 pl-10 pr-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start"
+              className="w-full bg-gray-50 dark:bg-background border border-gray-300 dark:border-card-border rounded-lg py-2.5 pl-10 pr-4 text-gray-900 dark:text-primary-text focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-accent-start"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full md:w-48 bg-background border border-card-border rounded-lg py-2.5 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start"
+            className="w-full md:w-48 bg-gray-50 dark:bg-background border border-gray-300 dark:border-card-border rounded-lg py-2.5 px-4 text-gray-900 dark:text-primary-text focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-accent-start"
           >
             <option value="all">Todos os Status</option>
             <option value="pending">Pendentes</option>
@@ -191,7 +193,7 @@ export const BetHistory: React.FC = () => {
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="w-full md:w-48 bg-background border border-card-border rounded-lg py-2.5 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start"
+            className="w-full md:w-48 bg-gray-50 dark:bg-background border border-gray-300 dark:border-card-border rounded-lg py-2.5 px-4 text-gray-900 dark:text-primary-text focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-accent-start"
           >
             <option value="all">Todo o Período</option>
             <option value="7days">Últimos 7 Dias</option>
@@ -199,37 +201,38 @@ export const BetHistory: React.FC = () => {
           </select>
         </div>
 
-        <div className="bg-card border border-card-border rounded-xl overflow-x-auto">
+        {/* --- CORREÇÃO DE ESTILO: Adicionadas classes para modo claro --- */}
+        <div className="bg-white dark:bg-card border border-gray-200 dark:border-card-border rounded-xl overflow-x-auto shadow-sm">
           <table className="min-w-full">
-            <thead className="bg-white/5">
+            <thead className="bg-gray-50 dark:bg-white/5">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-text uppercase tracking-wider">Data</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-text uppercase tracking-wider">Jogo</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-text uppercase tracking-wider">Mercado</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-text uppercase tracking-wider">Odd</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-text uppercase tracking-wider">Stake</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-text uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-text uppercase tracking-wider">Resultado</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-secondary-text uppercase tracking-wider">Ações</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-secondary-text uppercase tracking-wider">Data</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-secondary-text uppercase tracking-wider">Jogo</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-secondary-text uppercase tracking-wider">Mercado</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-secondary-text uppercase tracking-wider">Odd</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-secondary-text uppercase tracking-wider">Stake</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-secondary-text uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-secondary-text uppercase tracking-wider">Resultado</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-secondary-text uppercase tracking-wider">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-card-border">
+            <tbody className="divide-y divide-gray-200 dark:divide-card-border">
               {loading ? (
-                <tr><td colSpan={8} className="text-center py-10 text-secondary-text">A carregar histórico...</td></tr>
+                <tr><td colSpan={8} className="text-center py-10 text-gray-500 dark:text-secondary-text">A carregar histórico...</td></tr>
               ) : filteredItems.length === 0 ? (
-                <tr><td colSpan={8} className="text-center py-10 text-secondary-text">Nenhum registo encontrado.</td></tr>
+                <tr><td colSpan={8} className="text-center py-10 text-gray-500 dark:text-secondary-text">Nenhum registo encontrado.</td></tr>
               ) : (
                 filteredItems.map(item => {
                   if (item.type === 'deposit' || item.type === 'withdrawal') {
                     const isDeposit = item.type === 'deposit';
                     return (
-                      <tr key={item.id} className={isDeposit ? 'bg-green-600/10' : 'bg-red-600/10'}>
-                        <td className="px-6 py-3 text-sm text-secondary-text">{formatDate(item.createdAt)}</td>
-                        <td colSpan={6} className={`px-6 py-3 text-sm font-semibold flex items-center gap-2 ${isDeposit ? 'text-green-400' : 'text-red-400'}`}>
+                      <tr key={item.id} className={isDeposit ? 'bg-green-50 dark:bg-green-600/10' : 'bg-red-50 dark:bg-red-600/10'}>
+                        <td className="px-6 py-3 text-sm text-gray-500 dark:text-secondary-text">{formatDate(item.createdAt)}</td>
+                        <td colSpan={6} className={`px-6 py-3 text-sm font-semibold flex items-center gap-2 ${isDeposit ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                           {isDeposit ? <ArrowUpCircle size={16} /> : <ArrowDownCircle size={16} />}
                           {isDeposit ? 'Depósito Realizado' : 'Saque Realizado'}
                         </td>
-                        <td className={`px-6 py-3 text-sm font-semibold ${isDeposit ? 'text-green-400' : 'text-red-400'}`}>
+                        <td className={`px-6 py-3 text-sm font-semibold ${isDeposit ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                           {isDeposit ? '+' : '-'} R$ {item.amount.toFixed(2)}
                         </td>
                       </tr>
@@ -238,33 +241,33 @@ export const BetHistory: React.FC = () => {
                     const bet = item;
                     return (
                       <tr key={bet.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-text">{formatDate(bet.createdAt)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-text">{bet.game}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-text">{bet.market}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-text">{bet.odd.toFixed(2)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-text">R$ {bet.stake.toFixed(2)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-secondary-text">{formatDate(bet.createdAt)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-primary-text">{bet.game}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-secondary-text">{bet.market}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-secondary-text">{bet.odd.toFixed(2)}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-secondary-text">R$ {bet.stake.toFixed(2)}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           {bet.result === 'pending' ? (
                             <div className="flex gap-2">
-                              <button onClick={() => handleUpdateStatus(bet, 'green')} className="p-1.5 text-green-400 hover:bg-green-400/10 rounded-full"><CheckCircle className="w-5 h-5" /></button>
-                              <button onClick={() => handleUpdateStatus(bet, 'red')} className="p-1.5 text-red-400 hover:bg-red-400/10 rounded-full"><XCircle className="w-5 h-5" /></button>
-                              <button onClick={() => handleUpdateStatus(bet, 'reembolso')} className="p-1.5 text-blue-400 hover:bg-blue-400/10 rounded-full"><RefreshCw className="w-5 h-5" /></button>
+                              <button onClick={() => handleUpdateStatus(bet, 'green')} className="p-1.5 text-green-500 hover:bg-green-100 dark:hover:bg-green-400/10 rounded-full"><CheckCircle className="w-5 h-5" /></button>
+                              <button onClick={() => handleUpdateStatus(bet, 'red')} className="p-1.5 text-red-500 hover:bg-red-100 dark:hover:bg-red-400/10 rounded-full"><XCircle className="w-5 h-5" /></button>
+                              <button onClick={() => handleUpdateStatus(bet, 'reembolso')} className="p-1.5 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-400/10 rounded-full"><RefreshCw className="w-5 h-5" /></button>
                             </div>
                           ) : (
                             <span className={`capitalize px-2 py-1 text-xs font-semibold rounded-full ${
-                              bet.result === 'green' ? 'bg-green-900/50 text-green-400' : 
-                              bet.result === 'red' ? 'bg-red-900/50 text-red-400' : 
-                              'bg-blue-900/50 text-blue-400'
+                              bet.result === 'green' ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400' : 
+                              bet.result === 'red' ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-400' : 
+                              'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400'
                             }`}>
                               {bet.result}
                             </span>
                           )}
                         </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${bet.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>R$ {bet.profit.toFixed(2)}</td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${bet.profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>R$ {bet.profit.toFixed(2)}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <div className="flex gap-2">
-                            <button onClick={() => handleOpenEditModal(bet)} className="text-secondary-text hover:text-primary-text"><Edit className="w-4 h-4" /></button>
-                            <button onClick={() => handleDeleteBet(bet)} className="text-secondary-text hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
+                            <button onClick={() => handleOpenEditModal(bet)} className="text-gray-400 dark:text-secondary-text hover:text-gray-700 dark:hover:text-primary-text"><Edit className="w-4 h-4" /></button>
+                            <button onClick={() => handleDeleteBet(bet)} className="text-gray-400 dark:text-secondary-text hover:text-red-500 dark:hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
                           </div>
                         </td>
                       </tr>

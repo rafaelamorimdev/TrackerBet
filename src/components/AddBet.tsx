@@ -120,40 +120,41 @@ export const AddBet: React.FC = () => {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="bg-card border border-card-border rounded-2xl p-8 shadow-lg">
+      {/* --- CORREÇÃO DE ESTILO: Adicionadas classes para modo claro --- */}
+      <div className="bg-white dark:bg-card border border-gray-200 dark:border-card-border rounded-2xl p-8 shadow-lg">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-accent-start/20 rounded-lg">
-              <Plus className="w-6 h-6 text-accent-start" />
+            <div className="p-2 bg-blue-100 dark:bg-accent-start/20 rounded-lg">
+              <Plus className="w-6 h-6 text-blue-600 dark:text-accent-start" />
             </div>
-            <h1 className="text-2xl font-bold text-primary-text">Nova Aposta</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-primary-text">Nova Aposta</h1>
           </div>
-          <button onClick={handleRepeatLastBet} className="flex items-center text-sm text-secondary-text hover:text-primary-text transition-colors">
+          <button onClick={handleRepeatLastBet} className="flex items-center text-sm text-gray-500 dark:text-secondary-text hover:text-gray-900 dark:hover:text-primary-text transition-colors">
             <Repeat className="w-4 h-4 mr-2" />
             Repetir Última
           </button>
         </div>
 
-        <div className="flex border-b border-card-border mb-6">
-          <button onClick={() => setActiveSport('futebol')} className={`px-4 py-3 font-semibold transition-colors ${activeSport === 'futebol' ? 'text-primary-text border-b-2 border-accent-start' : 'text-secondary-text'}`}>
+        <div className="flex border-b border-gray-200 dark:border-card-border mb-6">
+          <button onClick={() => setActiveSport('futebol')} className={`px-4 py-3 font-semibold transition-colors ${activeSport === 'futebol' ? 'text-gray-800 dark:text-primary-text border-b-2 border-blue-600 dark:border-accent-start' : 'text-gray-500 dark:text-secondary-text'}`}>
             Futebol
           </button>
-          <button onClick={() => setActiveSport('basquete')} className={`px-4 py-3 font-semibold transition-colors ${activeSport === 'basquete' ? 'text-primary-text border-b-2 border-accent-start' : 'text-secondary-text'}`}>
+          <button onClick={() => setActiveSport('basquete')} className={`px-4 py-3 font-semibold transition-colors ${activeSport === 'basquete' ? 'text-gray-800 dark:text-primary-text border-b-2 border-blue-600 dark:border-accent-start' : 'text-gray-500 dark:text-secondary-text'}`}>
             Basquete
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-secondary-text mb-2 block">Jogo</label>
-            <input name="game" value={formData.game} onChange={handleChange} type="text" placeholder={activeSport === 'futebol' ? "Ex: Real Madrid vs Juventus" : "Ex: Lakers vs Warriors"} className="w-full bg-background border border-card-border rounded-lg py-3 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start" />
+            <label className="text-sm font-medium text-gray-600 dark:text-secondary-text mb-2 block">Jogo</label>
+            <input name="game" value={formData.game} onChange={handleChange} type="text" placeholder={activeSport === 'futebol' ? "Ex: Real Madrid vs Juventus" : "Ex: Lakers vs Warriors"} className="w-full bg-gray-50 dark:bg-background border border-gray-300 dark:border-card-border rounded-lg py-3 px-4 text-gray-900 dark:text-primary-text focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-accent-start" />
           </div>
 
           <div>
             <div className="flex justify-between items-center mb-2">
-              <label className="text-sm font-medium text-secondary-text">Mercado</label>
+              <label className="text-sm font-medium text-gray-600 dark:text-secondary-text">Mercado</label>
               {!isAddingMarket && (
-                <button type="button" onClick={() => setIsAddingMarket(true)} className="text-xs text-accent-start font-semibold hover:underline">
+                <button type="button" onClick={() => setIsAddingMarket(true)} className="text-xs text-blue-600 dark:text-accent-start font-semibold hover:underline">
                   + Adicionar Novo
                 </button>
               )}
@@ -166,7 +167,7 @@ export const AddBet: React.FC = () => {
                   onChange={(e) => setNewMarketName(e.target.value)}
                   type="text"
                   placeholder="Nome do novo mercado"
-                  className="flex-grow bg-background border border-card-border rounded-lg py-3 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start"
+                  className="flex-grow bg-gray-50 dark:bg-background border border-gray-300 dark:border-card-border rounded-lg py-3 px-4 text-gray-900 dark:text-primary-text focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-accent-start"
                 />
                 <button type="button" onClick={handleSaveNewMarket} disabled={addMarketLoading} className="p-3 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50">
                   {addMarketLoading ? <div className="w-5 h-5 border-2 border-white/50 border-t-white rounded-full animate-spin"></div> : <Check className="w-5 h-5" />}
@@ -176,7 +177,7 @@ export const AddBet: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <select name="market" value={formData.market} onChange={handleChange} className="w-full bg-background border border-card-border rounded-lg py-3 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start">
+              <select name="market" value={formData.market} onChange={handleChange} className="w-full bg-gray-50 dark:bg-background border border-gray-300 dark:border-card-border rounded-lg py-3 px-4 text-gray-900 dark:text-primary-text focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-accent-start">
                 <option value="">Selecione o mercado</option>
                 {marketOptions.map(market => (
                   <option key={market} value={market}>{market}</option>
@@ -187,23 +188,23 @@ export const AddBet: React.FC = () => {
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-secondary-text mb-2 block">Odd</label>
-              <input name="odd" value={formData.odd} onChange={handleChange} type="text" placeholder="Ex: 1.72" className="w-full bg-background border border-card-border rounded-lg py-3 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start" />
+              <label className="text-sm font-medium text-gray-600 dark:text-secondary-text mb-2 block">Odd</label>
+              <input name="odd" value={formData.odd} onChange={handleChange} type="text" placeholder="Ex: 1.72" className="w-full bg-gray-50 dark:bg-background border border-gray-300 dark:border-card-border rounded-lg py-3 px-4 text-gray-900 dark:text-primary-text focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-accent-start" />
             </div>
             <div>
-              <label className="text-sm font-medium text-secondary-text mb-2 block">Stake (R$)</label>
-              <input name="stake" value={formData.stake} onChange={handleChange} type="text" placeholder="Ex: 20.00" className="w-full bg-background border border-card-border rounded-lg py-3 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start" />
+              <label className="text-sm font-medium text-gray-600 dark:text-secondary-text mb-2 block">Stake (R$)</label>
+              <input name="stake" value={formData.stake} onChange={handleChange} type="text" placeholder="Ex: 20.00" className="w-full bg-gray-50 dark:bg-background border border-gray-300 dark:border-card-border rounded-lg py-3 px-4 text-gray-900 dark:text-primary-text focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-accent-start" />
             </div>
           </div>
 
           {message && (
-            <div className={`text-center text-sm p-3 rounded-lg ${message.type === 'success' ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'}`}>
+            <div className={`text-center text-sm p-3 rounded-lg ${message.type === 'success' ? 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-400'}`}>
               {message.text}
             </div>
           )}
 
           <div className="pt-2">
-            <button type="submit" disabled={loading} className="w-full font-bold text-lg px-8 py-3 rounded-xl text-white bg-gradient-to-r from-accent-start to-accent-end hover:opacity-90 transition-opacity disabled:opacity-50">
+            <button type="submit" disabled={loading} className="w-full font-bold text-lg px-8 py-3 rounded-xl text-white bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-accent-start dark:to-accent-end hover:opacity-90 transition-opacity disabled:opacity-50">
               {loading ? 'A adicionar...' : 'Adicionar Aposta'}
             </button>
           </div>
