@@ -1,17 +1,18 @@
 // Caminho: src/components/PricingPage.tsx
 
 import React, { useState } from 'react';
-import { Star, AlertCircle } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth'; // No seu projeto real, importe o seu hook
+import { Star, AlertCircle, Award } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 import { User } from '../types';
+import { Timestamp } from 'firebase/firestore';
 
 // --- Interfaces ---
 interface Plan {
   id: string;
   name: string;
-  priceId: string; // ID do preço no seu sistema de pagamentos (ex: Stripe, Abacate Pay)
-  price: number; // Valor total da cobrança (ex: 66.00 para o trimestral)
-  duration: string; // Texto da duração (ex: '/trimestre')
+  priceId: string;
+  price: number;
+  duration: string;
   isPopular?: boolean;
   discountInfo?: string;
 }
@@ -102,9 +103,20 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ plan, user, onClose, onCo
   );
 };
 
+const formatDate = (timestamp: Timestamp | undefined | null) => {
+    if (timestamp?.toDate) {
+      return timestamp.toDate().toLocaleDateString('pt-BR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+    return 'Data indisponível';
+};
+
 // --- Componente Principal da Página de Planos ---
 export const PricingPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, isSubscriber, loading: authLoading } = useAuth();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
@@ -115,7 +127,6 @@ export const PricingPage: React.FC = () => {
     { id: 'annual', name: 'Anual', priceId: 'price_anual_id', price: 216.00, duration: '/ano', discountInfo: `Poupe 40%` },
   ];
 
-  // --- LÓGICA DE CHECKOUT ATUALIZADA ---
   const handleSubscription = async (data: { taxId: string; cellphone: string }) => {
     if (!user || !selectedPlan) {
       setError("Ocorreu um erro. Por favor, tente novamente.");
@@ -126,27 +137,23 @@ export const PricingPage: React.FC = () => {
     setError(null);
 
     try {
-      // A sua API deve estar na pasta /api/create-checkout.ts
       const response = await fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          // --- CORREÇÃO APLICADA AQUI ---
-          // Enviando o objeto completo do plano, como a sua API parece esperar
           plan: selectedPlan,
           user: { 
             uid: user.uid, 
             email: user.email, 
             displayName: user.displayName, 
-            taxId: data.taxId.replace(/\D/g, ''), // Envia apenas os números
-            cellphone: data.cellphone.replace(/\D/g, '') // Envia apenas os números
+            taxId: data.taxId.replace(/\D/g, ''),
+            cellphone: data.cellphone.replace(/\D/g, '')
           },
         }),
       });
 
       const result = await response.json();
       if (!response.ok) {
-        // Mostra a mensagem de erro específica vinda da API
         throw new Error(result.error || 'Falha ao comunicar com o servidor.');
       }
       
@@ -162,6 +169,29 @@ export const PricingPage: React.FC = () => {
       setSelectedPlan(null);
     }
   };
+
+  if (authLoading) {
+    return <div className="text-center p-10">A verificar o seu plano...</div>;
+  }
+
+  // --- LÓGICA CONDICIONAL ADICIONADA ---
+  if (isSubscriber && user) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center p-8">
+        <Award className="w-16 h-16 text-yellow-400 mb-4" />
+        <h1 className="text-3xl font-bold text-primary-text mb-2">Você já tem Acesso Premium!</h1>
+        <p className="text-lg text-secondary-text max-w-lg">
+          O seu acesso de teste foi concedido e todas as funcionalidades premium estão ativas.
+        </p>
+        <div className="mt-6 bg-card border border-card-border rounded-xl p-6">
+            <p className="text-sm text-secondary-text">O seu acesso expira em:</p>
+            <p className="text-2xl font-bold text-accent-start mt-1">
+                {formatDate(user.accessUntil)}
+            </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

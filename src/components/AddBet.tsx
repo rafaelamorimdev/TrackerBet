@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { Plus, Repeat, Check, X } from 'lucide-react';
 import { useBets } from '../hooks/useBets';
 import { useAuth } from '../hooks/useAuth';
-import { Bet } from '../types'; // Importa o tipo Bet
+import { Bet } from '../types';
 
 interface FormData {
   game: string;
@@ -14,7 +14,7 @@ interface FormData {
 }
 
 export const AddBet: React.FC = () => {
-  // --- CORREÇÃO 1: Usar 'historyItems' em vez de 'bets' ---
+  // --- CORREÇÃO: Usar 'historyItems' em vez de 'bets' ---
   const { addBet, historyItems } = useBets();
   const { user, addCustomMarket } = useAuth();
   const [activeSport, setActiveSport] = useState<'futebol' | 'basquete'>('futebol');
@@ -26,6 +26,7 @@ export const AddBet: React.FC = () => {
   const [newMarketName, setNewMarketName] = useState('');
   const [addMarketLoading, setAddMarketLoading] = useState(false);
 
+  // --- CORREÇÃO: Envolver as listas em useMemo para otimização e para corrigir o aviso de dependência ---
   const futebolMarketOptions = useMemo(() => [
     'Vencedor', 'Empate', 'Dupla Hipótese', 'Ambas as Equipas Marcam', 
     'Total de Golos (Mais/Menos)', 'Handicap Asiático', 'Total de Cantos (Mais/Menos)', 
@@ -42,7 +43,6 @@ export const AddBet: React.FC = () => {
     const defaultOptions = activeSport === 'futebol' ? futebolMarketOptions : basqueteMarketOptions;
     const customOptions = user?.customMarkets?.[activeSport] || [];
     return [...new Set([...defaultOptions, ...customOptions])];
-  // --- CORREÇÃO 3: Adicionar dependências ao useMemo ---
   }, [activeSport, user?.customMarkets, futebolMarketOptions, basqueteMarketOptions]);
 
   const handleSaveNewMarket = async () => {
@@ -73,7 +73,7 @@ export const AddBet: React.FC = () => {
         market: formData.market,
         odd: parseFloat(formData.odd.replace(',', '.')),
         stake: parseFloat(formData.stake.replace(',', '.')),
-        // --- CORREÇÃO 2: Adicionar o desporto ativo ---
+        // --- CORREÇÃO: Adicionar o desporto ativo ao objeto da aposta ---
         sport: activeSport
       };
 
@@ -93,7 +93,7 @@ export const AddBet: React.FC = () => {
   };
   
   const handleRepeatLastBet = () => {
-    // --- CORREÇÃO 1 (Continuação): Encontrar a última aposta no histórico unificado ---
+    // --- CORREÇÃO: Encontrar a última aposta no histórico unificado ---
     const lastBet = historyItems.find((item): item is Bet => item.type === 'bet');
 
     if (lastBet) {
@@ -121,7 +121,6 @@ export const AddBet: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-card border border-card-border rounded-2xl p-8 shadow-lg">
-        {/* ... O resto do seu JSX permanece o mesmo ... */}
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-accent-start/20 rounded-lg">
@@ -134,6 +133,7 @@ export const AddBet: React.FC = () => {
             Repetir Última
           </button>
         </div>
+
         <div className="flex border-b border-card-border mb-6">
           <button onClick={() => setActiveSport('futebol')} className={`px-4 py-3 font-semibold transition-colors ${activeSport === 'futebol' ? 'text-primary-text border-b-2 border-accent-start' : 'text-secondary-text'}`}>
             Futebol
@@ -142,11 +142,13 @@ export const AddBet: React.FC = () => {
             Basquete
           </button>
         </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-sm font-medium text-secondary-text mb-2 block">Jogo</label>
             <input name="game" value={formData.game} onChange={handleChange} type="text" placeholder={activeSport === 'futebol' ? "Ex: Real Madrid vs Juventus" : "Ex: Lakers vs Warriors"} className="w-full bg-background border border-card-border rounded-lg py-3 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start" />
           </div>
+
           <div>
             <div className="flex justify-between items-center mb-2">
               <label className="text-sm font-medium text-secondary-text">Mercado</label>
@@ -156,6 +158,7 @@ export const AddBet: React.FC = () => {
                 </button>
               )}
             </div>
+
             {isAddingMarket ? (
               <div className="flex gap-2">
                 <input
@@ -181,6 +184,7 @@ export const AddBet: React.FC = () => {
               </select>
             )}
           </div>
+          
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-secondary-text mb-2 block">Odd</label>
@@ -191,11 +195,13 @@ export const AddBet: React.FC = () => {
               <input name="stake" value={formData.stake} onChange={handleChange} type="text" placeholder="Ex: 20.00" className="w-full bg-background border border-card-border rounded-lg py-3 px-4 text-primary-text focus:outline-none focus:ring-2 focus:ring-accent-start" />
             </div>
           </div>
+
           {message && (
             <div className={`text-center text-sm p-3 rounded-lg ${message.type === 'success' ? 'bg-green-900/50 text-green-400' : 'bg-red-900/50 text-red-400'}`}>
               {message.text}
             </div>
           )}
+
           <div className="pt-2">
             <button type="submit" disabled={loading} className="w-full font-bold text-lg px-8 py-3 rounded-xl text-white bg-gradient-to-r from-accent-start to-accent-end hover:opacity-90 transition-opacity disabled:opacity-50">
               {loading ? 'A adicionar...' : 'Adicionar Aposta'}

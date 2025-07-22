@@ -1,8 +1,8 @@
-// Caminho: src/types/index.ts
+
 
 import { Timestamp } from 'firebase/firestore';
 
-// Interface para o Utilizador, com os campos de permissão que já implementámos
+// Interface para o Utilizador
 export interface User {
   uid: string;
   email: string;
@@ -16,13 +16,14 @@ export interface User {
   };
   isSubscriber: boolean;
   accessUntil?: Timestamp;
-  role?: 'admin'; // Opcional, para identificar administradores
+  role?: 'admin';
+  createdAt?: Timestamp; // Campo para o dashboard de métricas
 }
 
-// Interface para as Apostas, com o campo 'type' para o histórico unificado
+// Interface para as Apostas
 export interface Bet {
   id: string;
-  type: 'bet'; // Identificador do tipo
+  type: 'bet';
   userId: string;
   game: string;
   market: string;
@@ -37,11 +38,18 @@ export interface Bet {
 // Interface para as transações de Depósito e Saque
 export interface BankrollEntry {
   id: string;
-  type: 'deposit' | 'withdrawal'; // Apenas os tipos que aparecem no histórico
+  type: 'deposit' | 'withdrawal';
   userId: string;
   amount: number;
   createdAt: Date;
 }
 
-// O tipo unificado que representa qualquer item no histórico
+// Interface para as Subscrições (para o gráfico de receita)
+export interface Subscription {
+  amount: number;
+  createdAt: Timestamp;
+  userId: string;
+}
+
+// Tipo unificado para o histórico de apostas
 export type HistoryItem = Bet | BankrollEntry;

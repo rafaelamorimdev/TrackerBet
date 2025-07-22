@@ -16,6 +16,7 @@ import { db } from '../lib/firebase';
 import { useAuth } from './useAuth';
 import { Bet, BankrollEntry, HistoryItem } from '../types';
 
+// O tipo para os dados que vêm do formulário de nova aposta
 type NewBetData = Pick<Bet, 'game' | 'market' | 'odd' | 'stake' | 'sport'>;
 
 export const useBets = () => {
@@ -36,6 +37,7 @@ export const useBets = () => {
 
     setLoading(true);
 
+    // Listener para a coleção de 'bets'
     const betsQuery = query(collection(db, 'bets'), where("userId", "==", user.uid));
     const unsubscribeBets = onSnapshot(betsQuery, (snapshot) => {
       const betsData = snapshot.docs.map(doc => ({
@@ -47,6 +49,7 @@ export const useBets = () => {
       setBets(betsData);
     });
 
+    // Listener para a coleção de 'bankrollTransactions'
     const transQuery = query(collection(db, 'bankrollTransactions'), where("userId", "==", user.uid));
     const unsubscribeTrans = onSnapshot(transQuery, (snapshot) => {
       const transData = snapshot.docs.map(doc => ({
@@ -63,6 +66,7 @@ export const useBets = () => {
     };
   }, [user]);
 
+  // Efeito para juntar e ordenar os dados sempre que 'bets' ou 'transactions' mudarem
   useEffect(() => {
     const combinedItems = [...bets, ...transactions];
     combinedItems.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
