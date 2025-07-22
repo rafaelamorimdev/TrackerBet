@@ -26,7 +26,7 @@ export const useAuth = () => {
   useEffect(() => {
     let unsubscribeFromFirestore: (() => void) | null = null;
 
-    const unsubscribeFromAuth = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+    const unsubscribeFromAuth = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (unsubscribeFromFirestore) unsubscribeFromFirestore();
 
       if (!firebaseUser) {
@@ -38,62 +38,73 @@ export const useAuth = () => {
       }
 
       const userDocRef = doc(db, 'users', firebaseUser.uid);
-      unsubscribeFromFirestore = onSnapshot(userDocRef, (docSnapshot) => {
-        if (docSnapshot.exists()) {
-          const userData = docSnapshot.data();
-          setIsAdmin(userData.role === 'admin');
-          const accessUntil = userData.accessUntil as Timestamp | undefined;
-          const hasActiveTrial = accessUntil ? accessUntil.toMillis() > Date.now() : false;
-          setIsSubscriber(hasActiveTrial);
-          setUser({ uid: firebaseUser.uid, ...userData } as User);
-          setLoading(false);
-        } else {
-          const createNewUser = async () => {
-            const newUserEmail = firebaseUser.email!;
-            const preAuthRef = doc(db, 'preAuthorizedUsers', newUserEmail);
-            let accessUntil: Timestamp | undefined = undefined;
 
-            try {
-              const preAuthSnap = await getDoc(preAuthRef);
-              if (preAuthSnap.exists()) {
-                accessUntil = preAuthSnap.data().accessUntil as Timestamp;
-              }
-            } catch (e) {
-              console.error("Erro ao verificar pré-autorização:", e);
-            }
+      // --- LÓGICA DE CRIAÇÃO E LEITURA REESTRUTURADA PARA MAIOR ROBUSTEZ ---
+      try {
+        const docSnapshot = await getDoc(userDocRef);
 
-            const newUser: Omit<User, 'uid'> = {
-                email: newUserEmail,
-                displayName: firebaseUser.displayName || null,
-                photoURL: firebaseUser.photoURL || null,
-                initialBankroll: 0,
-                currentBankroll: 0,
-                isSubscriber: !!accessUntil,
-                accessUntil: accessUntil,
-                createdAt: Timestamp.now(),
-                customMarkets: { futebol: [], basquete: [] }
-            };
+        if (!docSnapshot.exists()) {
+          // É um novo utilizador, vamos criá-lo
+          const newUserEmail = firebaseUser.email!;
+          const preAuthRef = doc(db, 'preAuthorizedUsers', newUserEmail);
+          let accessUntil: Timestamp | undefined = undefined;
 
-            const batch = writeBatch(db);
-            batch.set(userDocRef, newUser);
-            if (accessUntil) {
-                batch.delete(preAuthRef);
-            }
-            await batch.commit();
+          const preAuthSnap = await getDoc(preAuthRef);
+          if (preAuthSnap.exists()) {
+            accessUntil = preAuthSnap.data().accessUntil as Timestamp;
+          }
+
+          const newUser: User = {
+              uid: firebaseUser.uid,
+              email: newUserEmail,
+              displayName: firebaseUser.displayName || null,
+              photoURL: firebaseUser.photoURL || null,
+              initialBankroll: 0,
+              currentBankroll: 0,
+              isSubscriber: !!accessUntil,
+              accessUntil: accessUntil,
+              createdAt: Timestamp.now(),
+              customMarkets: { futebol: [], basquete: [] }
           };
-          createNewUser();
+
+          const batch = writeBatch(db);
+          batch.set(userDocRef, newUser);
+          if (accessUntil) {
+              batch.delete(preAuthRef);
+          }
+          await batch.commit();
+          
+          // Define o estado manualmente após a criação
+          setUser(newUser);
+          setIsAdmin(newUser.role === 'admin');
+          setIsSubscriber(newUser.isSubscriber);
+
         }
-      }, (err) => {
-        console.error("Erro no listener do Firestore:", err);
+        
+        // Para utilizadores novos e existentes, estabelece o listener em tempo real
+        unsubscribeFromFirestore = onSnapshot(userDocRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const userData = snapshot.data();
+            setIsAdmin(userData.role === 'admin');
+            const accessUntil = userData.accessUntil as Timestamp | undefined;
+            const hasActiveTrial = accessUntil ? accessUntil.toMillis() > Date.now() : false;
+            setIsSubscriber(hasActiveTrial);
+            setUser({ uid: firebaseUser.uid, ...userData } as User);
+          }
+        });
+
+      } catch (err) {
+        console.error("Erro no processo de autenticação:", err);
         setError("Não foi possível carregar os dados do usuário.");
-        setLoading(false);
-      });
+      } finally {
+        setLoading(false); // Garante que o loading termina em todos os casos
+      }
     });
 
     return () => unsubscribeFromAuth();
   }, []);
   
-  // --- FUNÇÕES DE AÇÃO RESTAURADAS ---
+  // --- FUNÇÕES DE AÇÃO (sem alterações) ---
 
   const login = (email: string, password: string) => {
     return signInWithEmailAndPassword(auth, email, password);
