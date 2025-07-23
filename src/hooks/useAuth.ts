@@ -97,7 +97,7 @@ export const useAuth = () => {
     return () => unsubscribeFromAuth();
   }, []);
   
-  // --- FUNÇÕES DE AÇÃO ---
+  // --- FUNÇÕES DE AÇÃO RESTAURADAS ---
 
   const login = (email: string, password: string) => {
     return signInWithEmailAndPassword(auth, email, password);
