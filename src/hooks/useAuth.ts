@@ -12,7 +12,6 @@ import {
   sendPasswordResetEmail,
   confirmPasswordReset
 } from 'firebase/auth';
-// --- CORREÇÃO: 'setDoc' removido pois não estava a ser usado ---
 import { doc, onSnapshot, Timestamp, getDoc, writeBatch, runTransaction, updateDoc, increment, collection, addDoc } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../lib/firebase';
 import { User } from '../types';
@@ -40,8 +39,6 @@ export const useAuth = () => {
 
       const userDocRef = doc(db, 'users', firebaseUser.uid);
 
-      // --- LÓGICA REESTRUTURADA PARA MAIOR ROBUSTEZ ---
-      // onSnapshot é a única fonte de verdade para o estado do utilizador.
       unsubscribeFromFirestore = onSnapshot(userDocRef, async (docSnapshot) => {
         if (docSnapshot.exists()) {
           // Utilizador existente: lê os dados, define o estado e termina o carregamento.
@@ -51,7 +48,7 @@ export const useAuth = () => {
           const hasActiveTrial = accessUntil ? accessUntil.toMillis() > Date.now() : false;
           setIsSubscriber(hasActiveTrial);
           setUser({ uid: firebaseUser.uid, ...userData } as User);
-          setLoading(false); // Carregamento termina aqui, após o estado ser definido.
+          setLoading(false);
         } else {
           // Novo utilizador: cria o documento. O onSnapshot irá disparar novamente com os novos dados.
           try {
@@ -100,7 +97,7 @@ export const useAuth = () => {
     return () => unsubscribeFromAuth();
   }, []);
   
-  // --- FUNÇÕES DE AÇÃO (sem alterações) ---
+  // --- FUNÇÕES DE AÇÃO ---
 
   const login = (email: string, password: string) => {
     return signInWithEmailAndPassword(auth, email, password);
